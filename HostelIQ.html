@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelX — Smart College Hostel Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root{
+  --accent:#17B8A6;
+  --accent-ink:#04302B;
+  --accent-2:#6C8CFF;
+  --warn:#F2B84B;
+  --danger:#F0654F;
+  --success:#3FCF8E;
+  --radius-s:8px;
+  --radius-m:12px;
+  --radius-l:18px;
+  --font-head:'Manrope',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#0B1220; --bg-elev:#111A2C; --bg-elev-2:#16213A; --bg-elev-3:#1C2A47;
+  --border:#243052; --border-soft:#1B2540;
+  --text:#E7ECF5; --text-dim:#93A0B8; --text-faint:#5C6889;
+  --shadow: 0 12px 30px -14px rgba(0,0,0,.55);
+}
+html[data-theme="light"]{
+  --bg:#F3F5F9; --bg-elev:#FFFFFF; --bg-elev-2:#F7F8FC; --bg-elev-3:#EDF0F7;
+  --border:#E3E7F0; --border-soft:#ECEFF5;
+  --text:#111827; --text-dim:#5B6478; --text-faint:#8A93A8;
+  --shadow: 0 12px 30px -18px rgba(30,41,59,.25);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;line-height:1.5;transition:background .25s ease,color .25s ease;}
+h1,h2,h3,h4{font-family:var(--font-head);margin:0;letter-spacing:-.01em;}
+button{font-family:var(--font-body);}
+a{color:inherit;}
+::selection{background:var(--accent);color:#04211D;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+.hidden{display:none !important;}
+.tabular{font-variant-numeric:tabular-nums;}
+
+/* ---------- Shell ---------- */
+.app{display:flex;min-height:100vh;}
+.sidebar{
+  width:252px;flex:0 0 252px;background:var(--bg-elev);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:40;
+  transition:transform .25s ease, width .25s ease;
+}
+.sidebar.collapsed{width:76px;flex-basis:76px;}
+.brand{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid var(--border-soft);}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(155deg,var(--accent),#0D8F82);display:flex;align-items:center;justify-content:center;font-weight:800;color:#04241F;font-size:15px;flex:none;}
+.brand-text{overflow:hidden;white-space:nowrap;}
+.brand-text b{font-family:var(--font-head);font-size:15.5px;font-weight:800;display:block;}
+.brand-text span{font-size:11px;color:var(--text-dim);}
+.sidebar.collapsed .brand-text{display:none;}
+
+.nav{flex:1;overflow-y:auto;padding:14px 10px;}
+.nav-group-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:14px 10px 6px;font-weight:700;}
+.sidebar.collapsed .nav-group-label{display:none;}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:var(--radius-s);
+  color:var(--text-dim);text-decoration:none;cursor:pointer;font-size:13.5px;font-weight:600;margin-bottom:2px;
+  border:1px solid transparent;white-space:nowrap;overflow:hidden;
+}
+.nav-item .ic{width:20px;text-align:center;flex:none;font-size:15px;}
+.nav-item:hover{background:var(--bg-elev-2);color:var(--text);}
+.nav-item.active{background:color-mix(in srgb, var(--accent) 14%, transparent);color:var(--accent);border-color:color-mix(in srgb, var(--accent) 30%, transparent);}
+.sidebar.collapsed .nav-item span.label{display:none;}
+.sidebar.collapsed .nav-item{justify-content:center;}
+
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft);}
+.collapse-btn{width:100%;padding:8px;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--bg-elev-2);color:var(--text-dim);cursor:pointer;font-size:12px;font-weight:600;}
+.collapse-btn:hover{color:var(--text);}
+
+.main{flex:1;margin-left:252px;transition:margin-left .25s ease;min-width:0;}
+.sidebar.collapsed ~ .main{margin-left:76px;}
+
+.topbar{
+  position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;
+  padding:12px 24px;background:color-mix(in srgb, var(--bg) 82%, transparent);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.hamburger{display:none;border:1px solid var(--border);background:var(--bg-elev-2);border-radius:var(--radius-s);width:36px;height:36px;align-items:center;justify-content:center;cursor:pointer;color:var(--text);}
+.search-trigger{
+  flex:1;max-width:420px;display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius-m);
+  background:var(--bg-elev-2);border:1px solid var(--border);color:var(--text-faint);cursor:pointer;font-size:13px;
+}
+.search-trigger kbd{margin-left:auto;font-size:10.5px;border:1px solid var(--border);border-radius:5px;padding:2px 6px;background:var(--bg-elev-3);color:var(--text-dim);}
+.topbar-spacer{flex:1;}
+.icon-btn{
+  position:relative;width:36px;height:36px;border-radius:var(--radius-s);border:1px solid var(--border);
+  background:var(--bg-elev-2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--text);flex:none;
+}
+.icon-btn:hover{background:var(--bg-elev-3);}
+.dot-badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:9.5px;font-weight:700;min-width:15px;height:15px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+
+.role-select{
+  padding:7px 10px;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--bg-elev-2);
+  color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;
+}
+.profile-chip{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:999px;border:1px solid var(--border);background:var(--bg-elev-2);cursor:pointer;}
+.avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(155deg,var(--accent-2),#4A63C4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex:none;}
+.profile-chip span{font-size:12.5px;font-weight:600;}
+
+.content{padding:22px 24px 60px;max-width:1440px;}
+.view{}
+
+/* ---------- Typography blocks ---------- */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+.page-head h1{font-size:22px;font-weight:800;}
+.page-head p{margin:4px 0 0;color:var(--text-dim);font-size:13.5px;max-width:560px;}
+.page-head .meta{font-size:12px;color:var(--text-faint);margin-top:2px;}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:var(--radius-s);border:1px solid var(--border);
+  background:var(--bg-elev-2);color:var(--text);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;
+}
+.btn:hover{background:var(--bg-elev-3);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#04241F;}
+.btn-primary:hover{filter:brightness(1.06);}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff;}
+.btn-ghost{background:transparent;}
+.btn-sm{padding:6px 10px;font-size:12px;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* ---------- Cards / Grid ---------- */
+.grid{display:grid;gap:16px;}
+.kpi-grid{grid-template-columns:repeat(4,1fr);}
+.card{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius-m);padding:17px;}
+.panel{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius-l);padding:20px;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+.panel-head h3{font-size:14.5px;font-weight:700;}
+.panel-head .sub{font-size:12px;color:var(--text-faint);margin-top:2px;}
+
+.kpi-card{display:flex;flex-direction:column;gap:9px;}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;}
+.kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--bg-elev-2);}
+.kpi-label{font-size:12px;color:var(--text-dim);font-weight:600;}
+.kpi-value{font-size:25px;font-weight:800;font-family:var(--font-head);}
+.kpi-trend{font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:3px;width:fit-content;padding:2px 7px;border-radius:999px;}
+.trend-up{color:var(--success);background:color-mix(in srgb, var(--success) 15%, transparent);}
+.trend-down{color:var(--danger);background:color-mix(in srgb, var(--danger) 15%, transparent);}
+.trend-flat{color:var(--warn);background:color-mix(in srgb, var(--warn) 15%, transparent);}
+
+/* ---------- Badges / status ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+.b-green{color:var(--success);background:color-mix(in srgb, var(--success) 16%, transparent);}
+.b-amber{color:var(--warn);background:color-mix(in srgb, var(--warn) 18%, transparent);}
+.b-red{color:var(--danger);background:color-mix(in srgb, var(--danger) 16%, transparent);}
+.b-blue{color:var(--accent-2);background:color-mix(in srgb, var(--accent-2) 16%, transparent);}
+.b-teal{color:var(--accent);background:color-mix(in srgb, var(--accent) 16%, transparent);}
+.b-gray{color:var(--text-dim);background:var(--bg-elev-3);}
+
+/* ---------- Tables ---------- */
+.table-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.input, select.select{
+  padding:8px 11px;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--bg-elev-2);
+  color:var(--text);font-size:13px;
+}
+.input{min-width:200px;flex:1;max-width:280px;}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-m);}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px;}
+thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-faint);
+  background:var(--bg-elev-2);padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;font-weight:700;cursor:pointer;user-select:none;}
+thead th:hover{color:var(--text);}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr{cursor:default;}
+tbody tr.clickable{cursor:pointer;}
+tbody tr.clickable:hover{background:var(--bg-elev-2);}
+.pager{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 0;font-size:12px;color:var(--text-dim);}
+.pager .btns{display:flex;gap:6px;}
+.name-cell{display:flex;align-items:center;gap:9px;}
+.mini-avatar{width:26px;height:26px;border-radius:50%;background:var(--bg-elev-3);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:var(--text-dim);flex:none;}
+
+/* ---------- Two/three col layouts ---------- */
+.row-2{grid-template-columns:1.4fr 1fr;}
+.row-3{grid-template-columns:repeat(3,1fr);}
+
+/* ---------- AI insight cards ---------- */
+.insight{display:flex;gap:12px;padding:13px 14px;border-radius:var(--radius-m);border:1px solid var(--border);background:var(--bg-elev-2);margin-bottom:10px;}
+.insight:last-child{margin-bottom:0;}
+.insight .dot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:5px;}
+.insight-title{font-size:12.5px;font-weight:700;margin-bottom:2px;}
+.insight-body{font-size:12.5px;color:var(--text-dim);}
+
+/* ---------- Room grid ---------- */
+.room-floor-label{font-size:12px;font-weight:700;color:var(--text-dim);margin:14px 0 8px;}
+.room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:9px;}
+.room-tile{border:1px solid var(--border);border-radius:var(--radius-s);padding:10px 8px;cursor:pointer;background:var(--bg-elev-2);text-align:center;}
+.room-tile:hover{transform:translateY(-1px);box-shadow:var(--shadow);}
+.room-tile .rn{font-weight:800;font-size:13px;}
+.room-tile .rs{font-size:10px;margin-top:3px;font-weight:700;}
+.room-tile.st-available{border-color:color-mix(in srgb, var(--success) 45%, var(--border));}
+.room-tile.st-occupied{border-color:color-mix(in srgb, var(--accent-2) 45%, var(--border));}
+.room-tile.st-partial{border-color:color-mix(in srgb, var(--warn) 45%, var(--border));}
+.room-tile.st-maintenance{border-color:color-mix(in srgb, var(--danger) 45%, var(--border));}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-dim);margin-top:14px;}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;}
+
+/* ---------- Hostel cards ---------- */
+.hostel-card{display:flex;flex-direction:column;gap:12px;}
+.hostel-card .h-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.hostel-card h4{font-size:15px;font-weight:800;}
+.hostel-card .warden{font-size:12px;color:var(--text-faint);margin-top:2px;}
+.occ-bar{height:7px;border-radius:999px;background:var(--bg-elev-3);overflow:hidden;}
+.occ-bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));}
+.hostel-stats{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-dim);}
+
+/* ---------- Modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(6,10,20,.55);backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:100;overflow-y:auto;}
+.modal{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius-l);width:100%;max-width:560px;box-shadow:var(--shadow);}
+.modal.wide{max-width:760px;}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--border-soft);}
+.modal-head h3{font-size:15.5px;font-weight:800;}
+.modal-body{padding:20px;max-height:70vh;overflow-y:auto;}
+.modal-foot{padding:16px 20px;border-top:1px solid var(--border-soft);display:flex;justify-content:flex-end;gap:10px;}
+.close-x{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elev-2);cursor:pointer;color:var(--text-dim);font-size:15px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.form-field{display:flex;flex-direction:column;gap:5px;}
+.form-field.full{grid-column:1/-1;}
+.form-field label{font-size:11.5px;font-weight:700;color:var(--text-dim);}
+.form-field input,.form-field select,.form-field textarea{
+  padding:9px 11px;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--bg-elev-2);color:var(--text);font-size:13px;font-family:inherit;width:100%;
+}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.profile-section h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);margin-bottom:8px;}
+.kv{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-soft);font-size:13px;}
+.kv span:first-child{color:var(--text-dim);}
+.kv span:last-child{font-weight:600;}
+
+/* ---------- Command palette ---------- */
+.cmdk{max-width:600px;width:100%;}
+.cmdk-input{width:100%;border:none;background:transparent;padding:16px 20px;font-size:16px;color:var(--text);border-bottom:1px solid var(--border-soft);}
+.cmdk-input:focus{outline:none;}
+.cmdk-results{max-height:400px;overflow-y:auto;padding:8px;}
+.cmdk-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-s);cursor:pointer;}
+.cmdk-item:hover, .cmdk-item.sel{background:var(--bg-elev-2);}
+.cmdk-item .ic{width:26px;height:26px;border-radius:7px;background:var(--bg-elev-3);display:flex;align-items:center;justify-content:center;font-size:13px;flex:none;}
+.cmdk-item .t{font-size:13.5px;font-weight:600;}
+.cmdk-item .d{font-size:11.5px;color:var(--text-faint);}
+.cmdk-empty{padding:30px;text-align:center;color:var(--text-faint);font-size:13px;}
+
+/* ---------- Notifications dropdown ---------- */
+.dropdown{position:absolute;top:46px;right:0;width:340px;background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius-m);box-shadow:var(--shadow);z-index:60;overflow:hidden;}
+.dropdown-head{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border-bottom:1px solid var(--border-soft);}
+.dropdown-head h4{font-size:13px;font-weight:700;}
+.dropdown-head button{background:none;border:none;color:var(--accent);font-size:11.5px;font-weight:700;cursor:pointer;}
+.dropdown-list{max-height:360px;overflow-y:auto;}
+.notif{display:flex;gap:10px;padding:12px 15px;border-bottom:1px solid var(--border-soft);cursor:pointer;}
+.notif:hover{background:var(--bg-elev-2);}
+.notif.unread{background:color-mix(in srgb, var(--accent) 6%, transparent);}
+.notif .ic{font-size:15px;}
+.notif .t{font-size:12.5px;font-weight:600;}
+.notif .m{font-size:11.5px;color:var(--text-faint);margin-top:1px;}
+.wrap-rel{position:relative;}
+
+/* ---------- AI assistant ---------- */
+.ai-fab{position:fixed;bottom:22px;right:22px;z-index:70;width:56px;height:56px;border-radius:50%;border:none;
+  background:linear-gradient(155deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;
+  font-size:22px;cursor:pointer;box-shadow:0 14px 28px -10px rgba(23,184,166,.55);color:#04241F;}
+.ai-panel{position:fixed;bottom:90px;right:22px;width:360px;max-width:90vw;height:480px;max-height:70vh;background:var(--bg-elev);
+  border:1px solid var(--border);border-radius:var(--radius-l);box-shadow:var(--shadow);z-index:70;display:flex;flex-direction:column;overflow:hidden;}
+.ai-head{padding:14px 16px;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between;align-items:center;background:var(--bg-elev-2);}
+.ai-head b{font-size:13.5px;}
+.ai-head .st{font-size:11px;color:var(--success);}
+.ai-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.msg{max-width:85%;padding:9px 12px;border-radius:12px;font-size:12.5px;line-height:1.45;}
+.msg.bot{background:var(--bg-elev-2);border:1px solid var(--border-soft);align-self:flex-start;border-bottom-left-radius:3px;}
+.msg.user{background:var(--accent);color:#04241F;align-self:flex-end;border-bottom-right-radius:3px;font-weight:600;}
+.ai-suggest{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px;}
+.chip{font-size:11px;padding:5px 9px;border-radius:999px;border:1px solid var(--border);background:var(--bg-elev-2);cursor:pointer;color:var(--text-dim);}
+.chip:hover{color:var(--text);border-color:var(--accent);}
+.ai-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border-soft);}
+.ai-input-row input{flex:1;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:var(--bg-elev-2);color:var(--text);font-size:12.5px;}
+.ai-send{width:36px;height:36px;border-radius:50%;border:none;background:var(--accent);color:#04241F;font-size:14px;cursor:pointer;flex:none;}
+
+/* ---------- Emergency ---------- */
+.emergency-hero{background:linear-gradient(155deg, color-mix(in srgb, var(--danger) 18%, var(--bg-elev)), var(--bg-elev));border:1px solid color-mix(in srgb, var(--danger) 35%, var(--border));border-radius:var(--radius-l);padding:26px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;}
+.contact-card{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border:1px solid var(--border);border-radius:var(--radius-s);background:var(--bg-elev-2);margin-bottom:8px;}
+.contact-card:last-child{margin-bottom:0;}
+
+/* ---------- Toast ---------- */
+.toast-wrap{position:fixed;top:16px;right:16px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--bg-elev);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-s);padding:11px 15px;font-size:12.5px;box-shadow:var(--shadow);min-width:220px;}
+
+/* ---------- Kanban ---------- */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.kcol-head{font-size:12px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;color:var(--text-dim);}
+.kcard{background:var(--bg-elev-2);border:1px solid var(--border);border-radius:var(--radius-s);padding:11px;margin-bottom:9px;font-size:12px;}
+.kcard b{display:block;font-size:12.5px;margin-bottom:4px;}
+.kcard .meta{color:var(--text-faint);font-size:11px;margin-top:6px;}
+
+/* ---------- Mess ---------- */
+.mess-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
+.mess-day{border:1px solid var(--border);border-radius:var(--radius-m);padding:12px;background:var(--bg-elev-2);}
+.mess-day h5{font-size:12px;font-weight:800;margin-bottom:8px;}
+.mess-day .meal{font-size:11px;margin-bottom:6px;}
+.mess-day .meal b{display:block;color:var(--text-dim);font-size:10px;text-transform:uppercase;letter-spacing:.03em;}
+.rating-bar{display:flex;align-items:center;gap:6px;}
+.rating-track{flex:1;height:5px;border-radius:99px;background:var(--bg-elev-3);overflow:hidden;}
+.rating-track > i{display:block;height:100%;background:var(--warn);}
+
+/* ---------- Charts ---------- */
+.chart-box{position:relative;height:230px;}
+.chart-box.sm{height:180px;}
+
+/* ---------- Personal (student/parent) dashboard ---------- */
+.stat-line{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border-soft);}
+.stat-line:last-child{border-bottom:none;}
+
+/* Empty state */
+.empty{padding:34px;text-align:center;color:var(--text-faint);}
+.empty b{display:block;color:var(--text);font-size:13.5px;margin-bottom:4px;}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1180px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .row-2{grid-template-columns:1fr;}
+  .row-3{grid-template-columns:1fr 1fr;}
+  .kanban{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:860px){
+  .sidebar{transform:translateX(-100%);width:252px;flex-basis:252px;}
+  .sidebar.mobile-open{transform:translateX(0);}
+  .main{margin-left:0 !important;}
+  .hamburger{display:flex;}
+  .role-select{display:none;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .row-3{grid-template-columns:1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .profile-grid{grid-template-columns:1fr;}
+  .kanban{grid-template-columns:1fr;}
+  .mess-grid{grid-template-columns:repeat(4,1fr);}
+  .content{padding:16px 14px 60px;}
+  .search-trigger span.lbl{display:none;}
+}
+@media (max-width:520px){
+  .kpi-grid{grid-template-columns:1fr;}
+  .mess-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">HX</div>
+      <div class="brand-text"><b>HostelX</b><span>One platform, every hostel.</span></div>
+    </div>
+    <nav class="nav" id="navList"></nav>
+    <div class="sidebar-foot">
+      <button class="collapse-btn" id="collapseBtn">« Collapse</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main" id="mainArea">
+    <header class="topbar">
+      <button class="hamburger" id="hamburgerBtn">☰</button>
+      <div class="search-trigger" id="searchTrigger">
+        <span>🔍</span><span class="lbl">Search students, rooms, complaints…</span><kbd>Ctrl K</kbd>
+      </div>
+      <div class="topbar-spacer"></div>
+      <select class="role-select" id="roleSelect">
+        <option>Super Admin</option>
+        <option>Warden</option>
+        <option>Staff</option>
+        <option>Student</option>
+        <option>Parent</option>
+      </select>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme">🌙</button>
+      <div class="wrap-rel">
+        <button class="icon-btn" id="bellBtn" title="Notifications">🔔<span class="dot-badge" id="bellCount">5</span></button>
+        <div class="dropdown hidden" id="notifDropdown"></div>
+      </div>
+      <div class="wrap-rel">
+        <div class="profile-chip" id="profileChip">
+          <div class="avatar" id="profileAvatar">SA</div>
+          <span id="profileName">Admin User</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+<button class="ai-fab" id="aiFab" title="HostelAI">🤖</button>
+<div class="ai-panel hidden" id="aiPanel">
+  <div class="ai-head">
+    <div><b>HostelAI</b><div class="st">● live on demo data</div></div>
+    <button class="close-x" id="aiClose">✕</button>
+  </div>
+  <div class="ai-msgs" id="aiMsgs"></div>
+  <div class="ai-suggest" id="aiSuggest"></div>
+  <div class="ai-input-row">
+    <input id="aiInput" placeholder="Ask about your hostel…" />
+    <button class="ai-send" id="aiSend">➤</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="cmdkOverlay">
+  <div class="modal cmdk">
+    <input class="cmdk-input" id="cmdkInput" placeholder="Search students, rooms, complaints, notices…" />
+    <div class="cmdk-results" id="cmdkResults"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="modalOverlay"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* =====================================================================
+   DEMO DATA
+===================================================================== */
+const FIRST_M = ["Arjun","Rohan","Aditya","Vikram","Karan","Siddharth","Rahul","Aman","Nikhil","Yash","Dev","Ishaan","Aryan","Krishna","Manav","Pranav","Raghav","Sahil","Tanay","Uday"];
+const FIRST_F = ["Ananya","Diya","Isha","Kavya","Meera","Neha","Priya","Riya","Sanya","Tara","Aisha","Bhavya","Charvi","Divya","Esha","Fiza","Gauri","Hina","Ira","Jiya"];
+const LAST = ["Sharma","Verma","Iyer","Reddy","Nair","Gupta","Mehta","Joshi","Kapoor","Chauhan","Bose","Das","Menon","Pillai","Rao","Saxena","Trivedi","Yadav","Malhotra","Chatterjee"];
+const DEPTS = ["Computer Science","Electronics","Mechanical","Civil","Electrical","Data Science","Biotechnology","Business Admin"];
+const HOSTELS = [
+  {id:"H1",name:"Boys Hostel A",type:"Boys",warden:"Mr. Suresh Nair",totalRooms:120,totalBeds:480,occupied:452,reserved:9,maintenance:6},
+  {id:"H2",name:"Boys Hostel B",type:"Boys",warden:"Mr. Anil Kapoor",totalRooms:110,totalBeds:440,occupied:388,reserved:12,maintenance:14},
+  {id:"H3",name:"Girls Hostel A",type:"Girls",warden:"Mrs. Kavitha Reddy",totalRooms:130,totalBeds:520,occupied:501,reserved:6,maintenance:4},
+  {id:"H4",name:"Girls Hostel B",type:"Girls",warden:"Mrs. Fatima Sheikh",totalRooms:100,totalBeds:400,occupied:349,reserved:10,maintenance:8},
+  {id:"H5",name:"PG / Research Hostel",type:"Co-ed (PG)",warden:"Dr. Rajeev Malhotra",totalRooms:70,totalBeds:280,occupied:213,reserved:4,maintenance:3},
+];
+function rnd(n){return Math.floor(Math.random()*n);}
+function pick(arr){return arr[rnd(arr.length)];}
+function pad(n){return String(n).padStart(2,'0');}
+
+const students = [];
+(function genStudents(){
+  let sid=2401;
+  for(let i=0;i<66;i++){
+    const gender = i%2===0?"M":"F";
+    const first = gender==="M"?pick(FIRST_M):pick(FIRST_F);
+    const last = pick(LAST);
+    const hostel = gender==="M" ? pick([HOSTELS[0],HOSTELS[1],HOSTELS[4]]) : pick([HOSTELS[2],HOSTELS[3],HOSTELS[4]]);
+    const year = 1+rnd(4);
+    const dept = pick(DEPTS);
+    const room = (1+rnd(4))+"0"+(1+rnd(8));
+    const statusRoll = rnd(100);
+    const status = statusRoll<88?"Active":(statusRoll<96?"On Leave":"Suspended");
+    students.push({
+      id:"HX"+(sid++), name:first+" "+last, gender, dept, year:"Year "+year, hostel:hostel.name, hostelId:hostel.id,
+      room, status, phone:"+91 9"+ (100000000+rnd(899999999)),
+      email:(first+"."+last).toLowerCase()+"@campus.edu",
+      parent:pick(FIRST_M)+" "+last, parentPhone:"+91 9"+(100000000+rnd(899999999)),
+      feeStatus: pick(["Paid","Paid","Paid","Pending","Overdue"]),
+      attendance: 82+rnd(18),
+    });
+  }
+})();
+
+const complaintCats = ["Electrical","Plumbing","Cleaning","Food","Wi-Fi","Furniture","Room","Security","Water","Other"];
+const complaints = [];
+(function genComplaints(){
+  const priorities=["LOW","MEDIUM","HIGH","CRITICAL"];
+  const statuses=["New","Assigned","In Progress","Resolved","Closed"];
+  const samples = {
+    "Electrical":"Flickering lights and a tripping switchboard in the corridor.",
+    "Plumbing":"Leaking pipe under the washbasin, water pooling on the floor.",
+    "Cleaning":"Common washroom not cleaned for two days.",
+    "Food":"Rice was undercooked at dinner service.",
+    "Wi-Fi":"No internet connectivity since last night on this floor.",
+    "Furniture":"Study chair is broken, one leg is missing.",
+    "Room":"Window latch is broken, doesn't close properly.",
+    "Security":"Outer gate light near Block C is not working at night.",
+    "Water":"Low water pressure in the mornings, taps barely running.",
+    "Other":"Request to repaint the room wall, paint is peeling."
+  };
+  for(let i=0;i<28;i++){
+    const cat = pick(complaintCats);
+    const stu = pick(students);
+    const pr = cat==="Security"||cat==="Water"&&rnd(2)===0 ? pick(["HIGH","CRITICAL"]) : pick(priorities);
+    complaints.push({
+      id:"CMP-"+(1000+i), student:stu.name, studentId:stu.id, category:cat, hostel:stu.hostel, room:stu.room,
+      priority:pr, status:pick(statuses), assigned:pick(["Unassigned","Ramesh (Elec)","Suresh (Plumb)","Housekeeping Team","Security Desk","IT Support"]),
+      date:`2026-09-${pad(1+rnd(9))}`, desc:samples[cat]
+    });
+  }
+})();
+
+const leaves = [];
+(function genLeaves(){
+  const reasons=["Family function","Medical appointment","Festival at home","Sibling's wedding","Personal work","Home visit"];
+  const statuses=["Pending","Approved","Rejected","Expired"];
+  for(let i=0;i<18;i++){
+    const stu=pick(students);
+    leaves.push({id:"LV-"+(500+i), student:stu.name, studentId:stu.id, hostel:stu.hostel, from:`2026-09-${pad(5+rnd(20))}`, to:`2026-09-${pad(10+rnd(15))}`,
+      reason:pick(reasons), destination:pick(["Mumbai","Pune","Jaipur","Lucknow","Chennai","Kolkata","Home town"]),
+      emergencyContact:stu.parentPhone, status:pick(statuses)});
+  }
+})();
+
+const fees = students.slice(0,40).map((s,i)=>({
+  id:"FEE-"+(3000+i), student:s.name, studentId:s.id, hostel:s.hostel, amount: 42000+rnd(6)*1000,
+  dueDate:`2026-0${pick([8,9])}-${pad(5+rnd(20))}`, status:s.feeStatus
+}));
+
+const visitors = [];
+(function genVisitors(){
+  for(let i=0;i<16;i++){
+    const stu=pick(students);
+    visitors.push({id:"VS-"+(700+i), name:pick(FIRST_M.concat(FIRST_F))+" "+pick(LAST), visiting:stu.name, hostel:stu.hostel,
+      phone:"+91 9"+(100000000+rnd(899999999)), purpose:pick(["Parent visit","Delivery","Guardian visit","Friend visit","Relative visit"]),
+      entry:`0${5+rnd(4)}:${pad(rnd(60))} PM`, exit: rnd(3)===0?"—":`0${6+rnd(4)}:${pad(rnd(60))} PM`,
+      status:pick(["Approved","Approved","Pending","Checked-out"])});
+  }
+})();
+
+const maintenance = [];
+(function genMaint(){
+  const items=["AC not cooling in common room","Broken window pane, Room 204","Water leakage in bathroom, Block C","Ceiling fan not working, Room 118",
+    "Corridor light flickering, Floor 2","Door lock jammed, Room 311","Geyser not heating water","Drainage blocked near mess hall",
+    "Wi-Fi router offline, Floor 3","Broken tile in washroom, Floor 1"];
+  const statuses=["Pending","In Progress","Completed","Overdue"];
+  for(let i=0;i<14;i++){
+    maintenance.push({id:"MT-"+(900+i), title:pick(items), hostel:pick(HOSTELS).name, worker:pick(["Ramesh Kumar","Suresh Babu","Mohan Lal","Vendor - CoolFix","Vendor - AquaPro"]),
+      cost:800+rnd(12)*500, status:pick(statuses), date:`2026-09-${pad(1+rnd(9))}`});
+  }
+})();
+
+const notices = [
+  {id:"NT-01", title:"Mid-semester mess menu revision", audience:"All Students", date:"2026-09-08", body:"The mess committee has revised the weekly menu based on last month's feedback. New menu effective Monday."},
+  {id:"NT-02", title:"Fire safety drill — Boys Hostel A & B", audience:"Specific Hostel", date:"2026-09-07", body:"A mandatory fire safety drill will be conducted at 6 PM. All residents must participate."},
+  {id:"NT-03", title:"Hostel fee due date reminder", audience:"All Students", date:"2026-09-05", body:"Hostel fees for this semester are due by 20th September. Late payments attract a fine."},
+  {id:"NT-04", title:"Water supply maintenance — Girls Hostel B", audience:"Specific Hostel", date:"2026-09-04", body:"Water supply will be interrupted between 10 AM–1 PM for tank cleaning."},
+  {id:"NT-05", title:"Diwali vacation leave applications open", audience:"All Students", date:"2026-09-02", body:"Students may now apply for Diwali vacation leave through the Leave Requests page."},
+  {id:"NT-06", title:"New guest entry QR check-in", audience:"All Students", date:"2026-08-30", body:"Visitor entries will now use QR-based check-in at the main gate for faster processing."},
+];
+
+const messMenu = {
+  Mon:{b:"Poha, Boiled Eggs, Tea",l:"Dal, Rice, Roti, Mixed Veg",s:"Samosa, Chai",d:"Paneer Butter Masala, Rice, Roti"},
+  Tue:{b:"Idli, Sambar, Coffee",l:"Rajma, Rice, Roti, Salad",s:"Bhel Puri",d:"Chicken Curry / Soya Curry, Rice, Roti"},
+  Wed:{b:"Paratha, Curd, Pickle",l:"Chole, Rice, Roti, Papad",s:"Vada Pav",d:"Veg Biryani, Raita"},
+  Thu:{b:"Upma, Banana, Tea",l:"Dal Tadka, Rice, Roti, Sabzi",s:"Sandwich",d:"Egg Curry / Paneer, Rice, Roti"},
+  Fri:{b:"Bread Omelette / Toast, Juice",l:"Kadhi, Rice, Roti, Salad",s:"Pakora, Chai",d:"Fish Curry / Mushroom, Rice, Roti"},
+  Sat:{b:"Dosa, Chutney, Coffee",l:"Sambar Rice, Roti, Curd",s:"Momos",d:"Special Thali"},
+  Sun:{b:"Chole Bhature",l:"Veg Pulao, Raita, Papad",s:"Ice Cream",d:"Butter Chicken / Kofta, Rice, Roti"},
+};
+const messRatings = {Breakfast:4.1, Lunch:3.6, Snacks:3.9, Dinner:2.8};
+
+let notifications = [
+  {id:1, icon:"📅", t:"New leave request", m:"Ananya Sharma requested leave for Sep 12–15", unread:true},
+  {id:2, icon:"🔧", t:"Maintenance assigned", m:"AC repair in Room 204 assigned to CoolFix", unread:true},
+  {id:3, icon:"💰", t:"Hostel fee overdue", m:"14 students have fees overdue by 7+ days", unread:true},
+  {id:4, icon:"🚨", t:"Emergency alert cleared", m:"Fire drill at Boys Hostel A completed safely", unread:true},
+  {id:5, icon:"📢", t:"New hostel notice", m:"Mid-semester mess menu revision published", unread:true},
+  {id:6, icon:"🛠", t:"Complaint resolved", m:"Wi-Fi issue on Floor 3, Girls Hostel A resolved", unread:false},
+];
+
+/* Room grid for Rooms view (Boys Hostel A, 4 floors x 8 rooms) */
+const roomFloors = [];
+(function genRooms(){
+  for(let f=1;f<=4;f++){
+    const rooms=[];
+    for(let r=1;r<=8;r++){
+      const num=(f*100)+r;
+      const roll=rnd(100);
+      const status = roll<62?"occupied":roll<80?"available":roll<93?"partial":"maintenance";
+      const cap=3;
+      const occ = status==="occupied"?cap:status==="partial"?1+rnd(cap-1):0;
+      rooms.push({num,status,cap,occ});
+    }
+    roomFloors.push({floor:f,rooms});
+  }
+})();
+
+/* =====================================================================
+   STATE
+===================================================================== */
+const state = {
+  role: "Super Admin",
+  view: "dashboard",
+  theme: "dark",
+  sidebarCollapsed:false,
+  charts:{},
+  studentPage:1,
+  studentPerPage:10,
+  aiOpen:false,
+};
+
+const ROLE_INIT = {"Super Admin":"SA","Warden":"WD","Staff":"ST","Student":"AS","Parent":"PT"};
+const ROLE_NAME = {"Super Admin":"Admin User","Warden":"Warden Nair","Staff":"Staff Member","Student":"Ananya Sharma","Parent":"Mr. R. Sharma"};
+
+/* =====================================================================
+   NAV DEFINITION
+===================================================================== */
+const NAV = [
+  {group:"Overview", items:[
+    {id:"dashboard", label:"Dashboard", icon:"🏠", roles:"*"},
+    {id:"analytics", label:"Analytics", icon:"📊", roles:["Super Admin","Warden"]},
+    {id:"ai", label:"AI Intelligence", icon:"🤖", roles:["Super Admin","Warden"]},
+  ]},
+  {group:"Hostel Ops", items:[
+    {id:"students", label:"Students", icon:"👨‍🎓", roles:["Super Admin","Warden","Staff"]},
+    {id:"hostels", label:"Hostels", icon:"🏢", roles:["Super Admin","Warden"]},
+    {id:"rooms", label:"Rooms", icon:"🛏", roles:["Super Admin","Warden","Staff","Student","Parent"]},
+    {id:"allocation", label:"Room Allocation", icon:"📋", roles:["Super Admin","Warden"]},
+    {id:"attendance", label:"Attendance", icon:"🕐", roles:"*"},
+  ]},
+  {group:"Requests", items:[
+    {id:"leave", label:"Leave Requests", icon:"📅", roles:"*"},
+    {id:"complaints", label:"Complaints", icon:"🛠", roles:"*"},
+    {id:"maintenance", label:"Maintenance", icon:"🔧", roles:["Super Admin","Warden","Staff"]},
+  ]},
+  {group:"Campus Life", items:[
+    {id:"mess", label:"Mess", icon:"🍽", roles:"*"},
+    {id:"visitors", label:"Visitors", icon:"👥", roles:"*"},
+    {id:"fees", label:"Fees", icon:"💰", roles:["Super Admin","Warden","Student","Parent"]},
+    {id:"notices", label:"Notices", icon:"📢", roles:"*"},
+    {id:"emergency", label:"Emergency", icon:"🚨", roles:"*"},
+  ]},
+  {group:"System", items:[
+    {id:"reports", label:"Reports", icon:"📈", roles:["Super Admin","Warden"]},
+    {id:"settings", label:"Settings", icon:"⚙", roles:"*"},
+  ]},
+];
+
+function allowedFor(item, role){ return item.roles==="*" || item.roles.includes(role); }
+
+function renderNav(){
+  const el = document.getElementById('navList');
+  el.innerHTML = "";
+  NAV.forEach(group=>{
+    const visItems = group.items.filter(i=>allowedFor(i,state.role));
+    if(!visItems.length) return;
+    const lbl = document.createElement('div'); lbl.className="nav-group-label"; lbl.textContent=group.group;
+    el.appendChild(lbl);
+    visItems.forEach(item=>{
+      const a = document.createElement('div');
+      a.className = "nav-item" + (state.view===item.id?" active":"");
+      a.innerHTML = `<span class="ic">${item.icon}</span><span class="label">${item.label}</span>`;
+      a.onclick = ()=>{ setView(item.id); if(window.innerWidth<=860) closeMobileSidebar(); };
+      el.appendChild(a);
+    });
+  });
+  // fallback if current view not allowed for role
+  const flat = NAV.flatMap(g=>g.items);
+  const cur = flat.find(i=>i.id===state.view);
+  if(cur && !allowedFor(cur,state.role)){ state.view="dashboard"; }
+}
+
+function closeMobileSidebar(){ document.getElementById('sidebar').classList.remove('mobile-open'); }
+
+/* =====================================================================
+   VIEW ROUTER
+===================================================================== */
+function setView(id){
+  state.view=id;
+  renderNav();
+  renderContent();
+  document.getElementById('content').scrollTo?.(0,0);
+  window.scrollTo(0,0);
+}
+
+function renderContent(){
+  const c = document.getElementById('content');
+  const fns = {
+    dashboard: renderDashboard, analytics: renderAnalytics, ai: renderAI,
+    students: renderStudents, hostels: renderHostels, rooms: renderRooms,
+    allocation: renderAllocation, attendance: renderAttendance, leave: renderLeave,
+    complaints: renderComplaints, maintenance: renderMaintenance, mess: renderMess,
+    visitors: renderVisitors, fees: renderFees, notices: renderNotices,
+    emergency: renderEmergency, reports: renderReports, settings: renderSettings,
+  };
+  c.innerHTML = (fns[state.view]||renderDashboard)();
+  afterRender();
+}
+
+/* =====================================================================
+   SHARED HELPERS
+===================================================================== */
+function pageHead(title, desc, actions=""){
+  return `<div class="page-head">
+    <div><h1>${title}</h1><p>${desc}</p></div>
+    <div class="btn-row">${actions}</div>
+  </div>`;
+}
+function kpiCard(icon,label,value,trendVal,trendType){
+  const cls = trendType==="up"?"trend-up":trendType==="down"?"trend-down":"trend-flat";
+  const arrow = trendType==="up"?"↑":trendType==="down"?"↓":"→";
+  return `<div class="card kpi-card">
+    <div class="kpi-top"><div class="kpi-icon">${icon}</div></div>
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-value tabular">${value}</div>
+    <div class="kpi-trend ${cls}">${arrow} ${trendVal}</div>
+  </div>`;
+}
+function badge(text,cls){ return `<span class="badge ${cls}">${text}</span>`; }
+function statusBadge(status){
+  const map={
+    "Active":"b-green","Paid":"b-green","Approved":"b-green","Resolved":"b-green","Closed":"b-gray","Completed":"b-green","Available":"b-green","Checked-out":"b-gray",
+    "Pending":"b-amber","On Leave":"b-amber","In Progress":"b-amber","Assigned":"b-blue","New":"b-blue","Partially Occupied":"b-amber",
+    "Overdue":"b-red","Rejected":"b-red","Suspended":"b-red","Expired":"b-gray","Maintenance":"b-red","Occupied":"b-blue","Unassigned":"b-gray"
+  };
+  return badge(status, map[status]||"b-gray");
+}
+function priorityBadge(p){
+  const map={LOW:"b-gray",MEDIUM:"b-blue",HIGH:"b-amber",CRITICAL:"b-red"};
+  return badge(p, map[p]||"b-gray");
+}
+function initials(name){ return name.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase(); }
+function toast(msg){
+  const wrap=document.getElementById('toastWrap');
+  const t=document.createElement('div'); t.className="toast"; t.textContent=msg;
+  wrap.appendChild(t);
+  setTimeout(()=>{ t.style.transition="opacity .4s"; t.style.opacity="0"; setTimeout(()=>t.remove(),400); },2600);
+}
+
+/* Generic sortable/searchable table builder */
+function dataTable(opts){
+  // opts: {id, columns:[{key,label}], rows, rowClick, pageSize}
+  const box = document.createElement('div');
+  return box;
+}
+
+/* =====================================================================
+   DASHBOARD
+===================================================================== */
+function totalStudents(){return 4286;}
+function totalHostels(){return HOSTELS.length + 3;} // demo figure per brief
+function totalRooms(){return 1240;}
+function totalBedsAll(){return HOSTELS.reduce((a,h)=>a+h.totalBeds,0)+2880;}
+function occupiedAll(){return HOSTELS.reduce((a,h)=>a+h.occupied,0)+2530;}
+
+function renderDashboard(){
+  if(state.role==="Student" || state.role==="Parent") return renderPersonalDashboard();
+
+  const pendingComplaints = complaints.filter(c=>["New","Assigned","In Progress"].includes(c.status)).length;
+  const pendingLeaves = leaves.filter(l=>l.status==="Pending").length;
+
+  return `
+  ${pageHead("Good morning, "+ (state.role==="Warden"?"Warden":"Admin") +" 👋",
+     "Here's what's happening across your hostels today · "+ new Date().toLocaleDateString('en-IN',{weekday:'long', year:'numeric', month:'long', day:'numeric'}),
+     `<button class="btn" onclick="openQuickActions()">⚡ Quick actions</button>
+      <button class="btn btn-primary" onclick="openAddStudent()">＋ Add Student</button>`)}
+
+  <div class="grid kpi-grid" style="margin-bottom:16px;">
+    ${kpiCard("👨‍🎓","Total Students","4,286","4.8% this month","up")}
+    ${kpiCard("🏢","Total Hostels", totalHostels(), "steady vs last term","flat")}
+    ${kpiCard("🛏","Total Rooms","1,240","2 new added","up")}
+    ${kpiCard("🟢","Available Beds", (totalBedsAll()-occupiedAll()).toLocaleString(), "10.7% vacancy","flat")}
+    ${kpiCard("🛠","Pending Complaints", pendingComplaints, "6 opened today","down")}
+    ${kpiCard("📅","Pending Leave Requests", pendingLeaves, "awaiting review","flat")}
+    ${kpiCard("💰","Fee Collection","₹1.82 Cr","91.3% collected","up")}
+    ${kpiCard("📈","Occupancy Rate","89.3%","1.2% vs last month","up")}
+  </div>
+
+  <div class="grid row-2" style="margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-head"><div><h3>Hostel Occupancy</h3><div class="sub">Occupied vs available across all blocks</div></div></div>
+      <div class="chart-box"><canvas id="chartOccDonut"></canvas></div>
+      <div class="legend">
+        <span><i style="background:var(--accent-2)"></i>Occupied</span>
+        <span><i style="background:var(--success)"></i>Available</span>
+        <span><i style="background:var(--warn)"></i>Reserved</span>
+        <span><i style="background:var(--danger)"></i>Maintenance</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><h3>Occupancy by Hostel</h3><div class="sub">Current term</div></div></div>
+      ${HOSTELS.map(h=>{
+        const pct=Math.round(h.occupied/h.totalBeds*100);
+        return `<div style="margin-bottom:13px;">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;"><b>${h.name}</b><span class="text-dim tabular" style="color:var(--text-dim)">${pct}%</span></div>
+          <div class="occ-bar"><i style="width:${pct}%"></i></div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>
+
+  <div class="grid row-2" style="margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-head"><div><h3>Monthly Occupancy Trend</h3><div class="sub">Last 6 months</div></div></div>
+      <div class="chart-box"><canvas id="chartOccTrend"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><h3>AI Hostel Intelligence</h3><div class="sub">Live insights</div></div><a href="#" onclick="setView('ai');return false;" style="font-size:12px;font-weight:700;color:var(--accent);">View all →</a></div>
+      ${aiInsightList(3)}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div><h3>Quick Actions</h3><div class="sub">Common tasks, one click away</div></div></div>
+    <div class="btn-row">
+      <button class="btn" onclick="openAddStudent()">👨‍🎓 Add Student</button>
+      <button class="btn" onclick="setView('allocation')">🛏 Allocate Room</button>
+      <button class="btn" onclick="openCreateNotice()">📢 Create Notice</button>
+      <button class="btn" onclick="setView('complaints')">🛠 Assign Complaint</button>
+      <button class="btn" onclick="setView('leave')">📅 Approve Leave</button>
+      <button class="btn" onclick="setView('hostels')">🏢 Add Hostel</button>
+      <button class="btn" onclick="setView('reports')">📈 Generate Report</button>
+      <button class="btn btn-danger" onclick="setView('emergency')">🚨 Report Emergency</button>
+    </div>
+  </div>
+  `;
+}
+
+function renderPersonalDashboard(){
+  const isParent = state.role==="Parent";
+  const me = students[0]; // Ananya Sharma as demo student/ward
+  const myComplaints = complaints.filter(c=>c.studentId===me.id);
+  const myLeaves = leaves.filter(l=>l.studentId===me.id);
+  return `
+  ${pageHead((isParent?"Welcome, "+ROLE_NAME.Parent+" 👋":"Good morning, "+me.name.split(' ')[0]+" 👋"),
+    (isParent? "Here's an overview of "+me.name+"'s hostel life." : "Here's what's happening with your hostel stay today."))}
+
+  <div class="grid row-2" style="margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-head"><h3>${isParent? me.name+"'s Profile" : "My Hostel Details"}</h3></div>
+      <div class="stat-line"><span style="color:var(--text-dim)">Hostel</span><b>${me.hostel}</b></div>
+      <div class="stat-line"><span style="color:var(--text-dim)">Room</span><b>${me.room}</b></div>
+      <div class="stat-line"><span style="color:var(--text-dim)">Department</span><b>${me.dept} · ${me.year}</b></div>
+      <div class="stat-line"><span style="color:var(--text-dim)">Attendance</span><b>${me.attendance}%</b></div>
+      <div class="stat-line"><span style="color:var(--text-dim)">Fee status</span><b>${statusBadge(me.feeStatus)}</b></div>
+      <div class="stat-line"><span style="color:var(--text-dim)">Warden</span><b>${HOSTELS.find(h=>h.id===me.hostelId).warden}</b></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Quick Actions</h3></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="setView('leave')">📅 Apply for Leave</button>
+        <button class="btn" onclick="setView('complaints')">🛠 Submit Complaint</button>
+        <button class="btn" onclick="setView('mess')">🍽 View Mess Menu</button>
+        <button class="btn" onclick="setView('notices')">📢 View Notices</button>
+        <button class="btn" onclick="setView('fees')">💰 View Fee Status</button>
+        <button class="btn btn-danger" onclick="setView('emergency')">🚨 Emergency</button>
+      </div>
+    </div>
+  </div>
+  <div class="grid row-2">
+    <div class="panel">
+      <div class="panel-head"><h3>My Complaints</h3></div>
+      ${myComplaints.length? myComplaints.map(c=>`<div class="stat-line"><span>${c.category} — ${c.desc.slice(0,34)}…</span>${statusBadge(c.status)}</div>`).join("") : `<div class="empty"><b>No complaints filed</b>Everything looks good.</div>`}
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>My Leave Requests</h3></div>
+      ${myLeaves.length? myLeaves.map(l=>`<div class="stat-line"><span>${l.from} → ${l.to} · ${l.reason}</span>${statusBadge(l.status)}</div>`).join("") : `<div class="empty"><b>No leave requests</b>Apply anytime from the Leave Requests page.</div>`}
+    </div>
+  </div>
+  `;
+}
+
+function aiInsightList(limit){
+  const insights = getAIInsights();
+  return insights.slice(0,limit||insights.length).map(i=>`
+    <div class="insight"><div class="dot" style="background:${i.color}"></div>
+      <div><div class="insight-title">${i.tag} ${i.title}</div><div class="insight-body">${i.body}</div></div>
+    </div>`).join("");
+}
+
+function getAIInsights(){
+  return [
+    {tag:"🟢", title:"Normal", body:"Boys Hostel A occupancy (94%) is within the recommended range for this term.", color:"var(--success)"},
+    {tag:"🟡", title:"Attention Required", body:"Boys Hostel B has 18 unresolved maintenance complaints — up 22% from last week.", color:"var(--warn)"},
+    {tag:"🔴", title:"High Priority", body:"12 students have reported repeated water-supply issues in Block C. Escalate to facilities.", color:"var(--danger)"},
+    {tag:"🟡", title:"Attention Required", body:"Fee collection in Girls Hostel B is trailing the term target by 8 percentage points.", color:"var(--warn)"},
+    {tag:"🟢", title:"Normal", body:"Average complaint resolution time improved to 1.8 days, down from 2.6 days last month.", color:"var(--success)"},
+    {tag:"🔴", title:"High Priority", body:"Paneer quality received an average rating of 2.8/5 this week — recommend vendor review.", color:"var(--danger)"},
+  ];
+}
+
+/* =====================================================================
+   ANALYTICS
+===================================================================== */
+function renderAnalytics(){
+  return `
+  ${pageHead("Analytics", "Deep dive into students, occupancy, complaints and fee trends across all hostels.")}
+  <div class="grid row-2" style="margin-bottom:16px;">
+    <div class="panel"><div class="panel-head"><h3>Students per Hostel</h3></div><div class="chart-box"><canvas id="chAnalytics1"></canvas></div></div>
+    <div class="panel"><div class="panel-head"><h3>Gender Distribution</h3></div><div class="chart-box"><canvas id="chAnalytics2"></canvas></div></div>
+  </div>
+  <div class="grid row-2" style="margin-bottom:16px;">
+    <div class="panel"><div class="panel-head"><h3>Complaints by Category</h3></div><div class="chart-box"><canvas id="chAnalytics3"></canvas></div></div>
+    <div class="panel"><div class="panel-head"><h3>Monthly Fee Collection (₹ Lakh)</h3></div><div class="chart-box"><canvas id="chAnalytics4"></canvas></div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>Complaint Resolution Trend</h3><div class="sub">Received vs resolved, last 6 months</div></div>
+    <div class="chart-box"><canvas id="chAnalytics5"></canvas></div>
+  </div>
+  `;
+}
+
+/* =====================================================================
+   AI INTELLIGENCE
+===================================================================== */
+function renderAI(){
+  const riskScore=72;
+  return `
+  ${pageHead("AI Hostel Intelligence 🤖","Predictive insights generated from complaint history, occupancy patterns, and safety reports.")}
+  <div class="grid row-2" style="margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-head"><h3>Live Insights</h3></div>
+      ${aiInsightList()}
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Occupancy Prediction</h3><div class="sub">Model: seasonal enrollment trend</div></div>
+      <div style="text-align:center;padding:14px 0;">
+        <div style="font-size:38px;font-weight:800;font-family:var(--font-head);color:var(--accent);">94%</div>
+        <div style="color:var(--text-dim);font-size:12.5px;">Expected occupancy next semester</div>
+      </div>
+      <div class="chart-box sm"><canvas id="chOccPredict"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid row-3" style="margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-head"><h3>Predictive Maintenance</h3></div>
+      <div class="insight"><div class="dot" style="background:var(--danger)"></div><div><div class="insight-title">Water pump — Girls Hostel A</div><div class="insight-body">83% failure probability within 30 days based on service history.</div></div></div>
+      <div class="insight"><div class="dot" style="background:var(--warn)"></div><div><div class="insight-title">Corridor lighting — Boys Hostel B</div><div class="insight-body">Recurring faults suggest wiring inspection needed.</div></div></div>
+      <div class="insight"><div class="dot" style="background:var(--warn)"></div><div><div class="insight-title">Geyser units — PG Hostel</div><div class="insight-body">Equipment age (6 yrs) exceeds recommended service window.</div></div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Complaint Intelligence</h3></div>
+      <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 10px;">Auto-classified this week using NLP on complaint text:</p>
+      ${["Electrical","Plumbing","Water","Wi-Fi"].map(c=>`<div class="stat-line"><span>${c}</span>${priorityBadge(pick(["MEDIUM","HIGH","CRITICAL"]))}</div>`).join("")}
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Safety Risk Score</h3></div>
+      <div style="text-align:center;padding:6px 0 4px;">
+        <div style="font-size:34px;font-weight:800;font-family:var(--font-head);color:var(--warn);">${riskScore}<span style="font-size:16px;color:var(--text-faint);">/100</span></div>
+        <div style="color:var(--text-dim);font-size:12px;margin-bottom:10px;">Moderate risk — based on incident &amp; near-miss reports</div>
+      </div>
+      <div class="stat-line"><span>Slippery floor — Mess hall</span>${badge("Flagged","b-amber")}</div>
+      <div class="stat-line"><span>Electrical exposure — Block C</span>${badge("Flagged","b-red")}</div>
+      <div class="stat-line"><span>Fire hazard — Kitchen store</span>${badge("Monitoring","b-blue")}</div>
+      <div class="stat-line"><span>Structural — Staircase B</span>${badge("Clear","b-green")}</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>Ask HostelAI</h3><div class="sub">Open the assistant to query live hostel data</div></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="toggleAI(true)">🤖 Open HostelAI Assistant</button>
+    </div>
+  </div>
+  `;
+}
+
+/* =====================================================================
+   STUDENTS
+===================================================================== */
+let studentFilters = {search:"", hostel:"", dept:"", year:"", sortKey:"name", sortDir:1};
+
+function renderStudents(){
+  return `
+  ${pageHead("Students","Manage student records, room assignments and academic details across all hostels.",
+    `<button class="btn" onclick="exportData('Students')">⬇ Export</button>
+     <button class="btn btn-primary" onclick="openAddStudent()">＋ Add Student</button>`)}
+  <div class="grid kpi-grid" style="margin-bottom:16px;">
+    ${kpiCard("👨‍🎓","Showing", students.length+" of 4,286","sample dataset","flat")}
+    ${kpiCard("🟢","Active", students.filter(s=>s.status==="Active").length,"in residence","up")}
+    ${kpiCard("🟡","On Leave", students.filter(s=>s.status==="On Leave").length,"currently away","flat")}
+    ${kpiCard("🔴","Suspended", students.filter(s=>s.status==="Suspended").length,"under review","down")}
+  </div>
+  <div class="panel">
+    <div class="table-toolbar">
+      <input class="input" id="stuSearch" placeholder="Search by name or ID…" oninput="studentFilters.search=this.value;state.studentPage=1;renderStudentTable();">
+      <select class="select" id="stuHostel" onchange="studentFilters.hostel=this.value;state.studentPage=1;renderStudentTable();">
+        <option value="">All Hostels</option>${HOSTELS.map(h=>`<option>${h.name}</option>`).join("")}
+      </select>
+      <select class="select" id="stuDept" onchange="studentFilters.dept=this.value;state.studentPage=1;renderStudentTable();">
+        <option value="">All Departments</option>${DEPTS.map(d=>`<option>${d}</option>`).join("")}
+      </select>
+      <select class="select" id="stuYear" onchange="studentFilters.year=this.value;state.studentPage=1;renderStudentTable();">
+        <option value="">All Years</option>${[1,2,3,4].map(y=>`<option>Year ${y}</option>`).join("")}
+      </select>
+    </div>
+    <div id="studentTableHolder"></div>
+  </div>
+  `;
+}
+function filteredStudents(){
+  let rows = students.filter(s=>{
+    const q = studentFilters.search.toLowerCase();
+    if(q && !(s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q))) return false;
+    if(studentFilters.hostel && s.hostel!==studentFilters.hostel) return false;
+    if(studentFilters.dept && s.dept!==studentFilters.dept) return false;
+    if(studentFilters.year && s.year!==studentFilters.year) return false;
+    return true;
+  });
+  rows.sort((a,b)=>{
+    const k=studentFilters.sortKey;
+    if(a[k]<b[k]) return -1*studentFilters.sortDir;
+    if(a[k]>b[k]) return 1*studentFilters.sortDir;
+    return 0;
+  });
+  return rows;
+}
+function sortStudents(key){
+  if(studentFilters.sortKey===key) studentFilters.sortDir*=-1; else {studentFilters.sortKey=key; studentFilters.sortDir=1;}
+  renderStudentTable();
+}
+function renderStudentTable(){
+  const holder = document.getElementById('studentTableHolder');
+  if(!holder) return;
+  const rows = filteredStudents();
+  const per = state.studentPerPage;
+  const totalPages = Math.max(1,Math.ceil(rows.length/per));
+  if(state.studentPage>totalPages) state.studentPage=totalPages;
+  const start=(state.studentPage-1)*per;
+  const pageRows = rows.slice(start,start+per);
+
+  holder.innerHTML = `
+  <div class="table-wrap"><table>
+    <thead><tr>
+      <th onclick="sortStudents('id')">Student ID</th>
+      <th onclick="sortStudents('name')">Name</th>
+      <th onclick="sortStudents('dept')">Department</th>
+      <th onclick="sortStudents('year')">Year</th>
+      <th onclick="sortStudents('hostel')">Hostel</th>
+      <th onclick="sortStudents('room')">Room</th>
+      <th onclick="sortStudents('status')">Status</th>
+    </tr></thead>
+    <tbody>
+      ${pageRows.length? pageRows.map(s=>`
+        <tr class="clickable" onclick="openStudentProfile('${s.id}')">
+          <td class="tabular">${s.id}</td>
+          <td><div class="name-cell"><div class="mini-avatar">${initials(s.name)}</div>${s.name}</div></td>
+          <td>${s.dept}</td><td>${s.year}</td><td>${s.hostel}</td><td class="tabular">${s.room}</td>
+          <td>${statusBadge(s.status)}</td>
+        </tr>`).join("") : `<tr><td colspan="7"><div class="empty"><b>No students match your filters</b>Try clearing search or filters.</div></td></tr>`}
+    </tbody>
+  </table></div>
+  <div class="pager">
+    <span>Showing ${rows.length? (start+1):0}–${Math.min(start+per,rows.length)} of ${rows.length}</span>
+    <div class="btns">
+      <button class="btn btn-sm" ${state.studentPage<=1?'disabled':''} onclick="state.studentPage--;renderStudentTable();">‹ Prev</button>
+      <button class="btn btn-sm" ${state.studentPage>=totalPages?'disabled':''} onclick="state.studentPage++;renderStudentTable();">Next ›</button>
+    </div>
+  </div>`;
+}
+
+function openStudentProfile(id){
+  const s = students.find(x=>x.id===id);
+  const hostel = HOSTELS.find(h=>h.id===s.hostelId);
+  const sComplaints = complaints.filter(c=>c.studentId===id);
+  const sLeaves = leaves.filter(l=>l.studentId===id);
+  const sVisitors = visitors.filter(v=>v.visiting===s.name);
+  openModal(`
+    <div class="modal-head"><h3>Student Profile</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:18px;">
+        <div class="mini-avatar" style="width:52px;height:52px;font-size:18px;">${initials(s.name)}</div>
+        <div><h3 style="font-size:17px;">${s.name}</h3><div style="color:var(--text-dim);font-size:12.5px;">${s.id} · ${s.dept} · ${s.year}</div></div>
+        <div style="margin-left:auto;">${statusBadge(s.status)}</div>
+      </div>
+      <div class="profile-grid">
+        <div class="profile-section"><h4>Contact Information</h4>
+          <div class="kv"><span>Phone</span><span>${s.phone}</span></div>
+          <div class="kv"><span>Email</span><span>${s.email}</span></div>
+        </div>
+        <div class="profile-section"><h4>Parent Information</h4>
+          <div class="kv"><span>Guardian</span><span>${s.parent}</span></div>
+          <div class="kv"><span>Phone</span><span>${s.parentPhone}</span></div>
+        </div>
+        <div class="profile-section"><h4>Hostel Information</h4>
+          <div class="kv"><span>Hostel</span><span>${s.hostel}</span></div>
+          <div class="kv"><span>Room</span><span>${s.room}</span></div>
+          <div class="kv"><span>Warden</span><span>${hostel.warden}</span></div>
+        </div>
+        <div class="profile-section"><h4>Academic &amp; Fees</h4>
+          <div class="kv"><span>Attendance</span><span>${s.attendance}%</span></div>
+          <div class="kv"><span>Fee status</span><span>${statusBadge(s.feeStatus)}</span></div>
+        </div>
+      </div>
+      <div class="profile-section" style="margin-top:16px;"><h4>Complaint History (${sComplaints.length})</h4>
+        ${sComplaints.length? sComplaints.map(c=>`<div class="kv"><span>${c.category} — ${c.date}</span>${statusBadge(c.status)}</div>`).join(""):`<div style="color:var(--text-faint);font-size:12.5px;">No complaints filed.</div>`}
+      </div>
+      <div class="profile-section" style="margin-top:14px;"><h4>Leave History (${sLeaves.length})</h4>
+        ${sLeaves.length? sLeaves.map(l=>`<div class="kv"><span>${l.from} → ${l.to}</span>${statusBadge(l.status)}</div>`).join(""):`<div style="color:var(--text-faint);font-size:12.5px;">No leave history.</div>`}
+      </div>
+      <div class="profile-section" style="margin-top:14px;"><h4>Visitor History (${sVisitors.length})</h4>
+        ${sVisitors.length? sVisitors.map(v=>`<div class="kv"><span>${v.name} — ${v.purpose}</span><span>${v.entry}</span></div>`).join(""):`<div style="color:var(--text-faint);font-size:12.5px;">No recorded visitors.</div>`}
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Close</button><button class="btn btn-primary" onclick="toast('Student record updated');closeModal();">Edit Record</button></div>
+  `, "wide");
+}
+
+function openAddStudent(){
+  openModal(`
+    <div class="modal-head"><h3>Add Student</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>Full Name</label><input id="fName" placeholder="e.g. Rohan Verma"></div>
+        <div class="form-field"><label>Student ID</label><input id="fId" placeholder="Auto-generated" disabled value="HX${2400+students.length+1}"></div>
+        <div class="form-field"><label>Department</label><select id="fDept">${DEPTS.map(d=>`<option>${d}</option>`).join("")}</select></div>
+        <div class="form-field"><label>Year</label><select id="fYear">${[1,2,3,4].map(y=>`<option>Year ${y}</option>`).join("")}</select></div>
+        <div class="form-field"><label>Hostel</label><select id="fHostel">${HOSTELS.map(h=>`<option>${h.name}</option>`).join("")}</select></div>
+        <div class="form-field"><label>Room Number</label><input id="fRoom" placeholder="e.g. 204"></div>
+        <div class="form-field"><label>Phone</label><input id="fPhone" placeholder="+91"></div>
+        <div class="form-field"><label>Email</label><input id="fEmail" placeholder="student@campus.edu"></div>
+        <div class="form-field full"><label>Parent / Guardian Name</label><input id="fParent" placeholder="Guardian full name"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitAddStudent()">Save Student</button></div>
+  `);
+}
+function submitAddStudent(){
+  const name=document.getElementById('fName').value.trim();
+  if(!name){ toast("Please enter a student name"); return; }
+  students.unshift({
+    id:"HX"+(2400+students.length+1), name, gender:"M", dept:document.getElementById('fDept').value,
+    year:document.getElementById('fYear').value, hostel:document.getElementById('fHostel').value,
+    hostelId: HOSTELS.find(h=>h.name===document.getElementById('fHostel').value).id,
+    room:document.getElementById('fRoom').value||"—", status:"Active",
+    phone:document.getElementById('fPhone').value||"—", email:document.getElementById('fEmail').value||"—",
+    parent:document.getElementById('fParent').value||"—", parentPhone:"—", feeStatus:"Pending", attendance:100
+  });
+  closeModal(); toast("Student added successfully");
+  if(state.view==="students") renderStudentTable();
+}
+
+/* =====================================================================
+   HOSTELS
+===================================================================== */
+function renderHostels(){
+  return `
+  ${pageHead("Hostels","Manage hostel blocks, wardens and bed capacity across the campus.",
+    `<button class="btn btn-primary" onclick="toast('Add Hostel form would open here')">＋ Add Hostel</button>`)}
+  <div class="grid kpi-grid" style="margin-bottom:16px;">
+    ${kpiCard("🏢","Total Hostels", HOSTELS.length, "across campus","flat")}
+    ${kpiCard("🛏","Total Beds", HOSTELS.reduce((a,h)=>a+h.totalBeds,0).toLocaleString(),"capacity","flat")}
+    ${kpiCard("🟢","Avg Occupancy", Math.round(HOSTELS.reduce((a,h)=>a+h.occupied/h.totalBeds,0)/HOSTELS.length*100)+"%","this term","up")}
+    ${kpiCard("🔧","Under Maintenance", HOSTELS.reduce((a,h)=>a+h.maintenance,0),"beds flagged","flat")}
+  </div>
+  <div class="grid row-3">
+    ${HOSTELS.map(h=>{
+      const pct=Math.round(h.occupied/h.totalBeds*100);
+      const avail=h.totalBeds-h.occupied-h.reserved-h.maintenance;
+      return `<div class="card hostel-card">
+        <div class="h-top"><div><h4>${h.name}</h4><div class="warden">${h.type} · Warden: ${h.warden}</div></div>${badge(pct+"%","b-teal")}</div>
+        <div class="occ-bar"><i style="width:${pct}%"></i></div>
+        <div class="hostel-stats"><span>${h.totalRooms} rooms</span><span>${h.totalBeds} beds</span><span>${avail} available</span></div>
+        <div class="btn-row"><button class="btn btn-sm" onclick="setView('rooms')">View Rooms</button><button class="btn btn-sm" onclick="toast('Editing '+'${h.name}')">Edit</button></div>
+      </div>`;
+    }).join("")}
+  </div>
+  `;
+}
+
+/* =====================================================================
+   ROOMS
+===================================================================== */
+function renderRooms(){
+  return `
+  ${pageHead("Rooms — Boys Hostel A","Visual room layout by floor. Click a room to see occupancy and maintenance history.",
+    `<button class="btn" onclick="toast('Filter by hostel coming from the selector below')">🏢 Change Hostel</button>`)}
+  ${roomFloors.map(f=>`
+    <div class="room-floor-label">Floor ${f.floor}</div>
+    <div class="room-grid">
+      ${f.rooms.map(r=>`
+        <div class="room-tile st-${r.status}" onclick='openRoomDetail(${JSON.stringify(r)})'>
+          <div class="rn">${r.num}</div>
+          <div class="rs">${r.status==="available"?"🟢 Free":r.status==="occupied"?"🔵 Full":r.status==="partial"?"🟡 Partial":"🔴 Maint."}</div>
+        </div>`).join("")}
+    </div>
+  `).join("")}
+  <div class="legend">
+    <span><i style="background:var(--success)"></i>Available</span>
+    <span><i style="background:var(--accent-2)"></i>Occupied</span>
+    <span><i style="background:var(--warn)"></i>Partially Occupied</span>
+    <span><i style="background:var(--danger)"></i>Maintenance</span>
+  </div>
+  `;
+}
+function openRoomDetail(r){
+  const occupants = students.filter(s=>s.room==(""+r.num)).slice(0,r.occ);
+  openModal(`
+    <div class="modal-head"><h3>Room ${r.num}</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="kv"><span>Status</span>${statusBadge(r.status==="available"?"Available":r.status==="occupied"?"Occupied":r.status==="partial"?"Partially Occupied":"Maintenance")}</div>
+      <div class="kv"><span>Capacity</span><span>${r.cap} beds</span></div>
+      <div class="kv"><span>Occupied Beds</span><span>${r.occ}</span></div>
+      <div class="kv"><span>Available Beds</span><span>${r.cap-r.occ}</span></div>
+      <div class="profile-section" style="margin-top:14px;"><h4>Students</h4>
+        ${occupants.length? occupants.map(s=>`<div class="kv"><span>${s.name}</span><span>${s.id}</span></div>`).join(""):`<div style="color:var(--text-faint);font-size:12.5px;">No student records linked in this demo.</div>`}
+      </div>
+      <div class="profile-section" style="margin-top:14px;"><h4>Maintenance History</h4>
+        <div style="color:var(--text-faint);font-size:12.5px;">${r.status==="maintenance"?"Open ticket: plumbing inspection scheduled.":"No open maintenance tickets."}</div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Close</button><button class="btn btn-primary" onclick="toast('Room allocation updated');closeModal();">Manage Allocation</button></div>
+  `);
+}
+
+/* =====================================================================
+   ALLOCATION
+===================================================================== */
+function renderAllocation(){
+  const waiting = students.slice(20,26);
+  return `
+  ${pageHead("Room Allocation","Assign students to rooms manually or let AI allocate based on preferences and hostel rules.",
+    `<button class="btn btn-primary" onclick="runAutoAllocate()">✨ Auto Allocate Rooms</button>`)}
+  <div class="grid row-2" style="margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-head"><h3>Manual Allocation</h3></div>
+      <div class="form-grid">
+        <div class="form-field"><label>Student</label><select id="allocStu">${students.slice(0,15).map(s=>`<option>${s.name} (${s.id})</option>`).join("")}</select></div>
+        <div class="form-field"><label>Hostel</label><select id="allocHostel">${HOSTELS.map(h=>`<option>${h.name}</option>`).join("")}</select></div>
+        <div class="form-field"><label>Room Number</label><input id="allocRoom" placeholder="e.g. 214"></div>
+        <div class="form-field"><label>Bed</label><select><option>Bed 1</option><option>Bed 2</option><option>Bed 3</option></select></div>
+      </div>
+      <div class="btn-row" style="margin-top:14px;"><button class="btn btn-primary" onclick="toast('Room allocated successfully')">Allocate Room</button><button class="btn" onclick="toast('Transfer request started')">Transfer Room</button></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>AI Allocation Considers</h3></div>
+      <div class="stat-line"><span>Student preferences</span>${badge("On","b-green")}</div>
+      <div class="stat-line"><span>Course / year</span>${badge("On","b-green")}</div>
+      <div class="stat-line"><span>Gender rules</span>${badge("On","b-green")}</div>
+      <div class="stat-line"><span>Room capacity</span>${badge("On","b-green")}</div>
+      <div class="stat-line"><span>Accessibility needs</span>${badge("On","b-green")}</div>
+      <div class="stat-line"><span>Existing roommate preference</span>${badge("On","b-green")}</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>Waiting List</h3><div class="sub">${waiting.length} students awaiting room assignment</div></div>
+    <div class="table-wrap"><table><thead><tr><th>Student</th><th>Preferred Hostel</th><th>Year</th><th>Requested On</th><th>Status</th></tr></thead>
+    <tbody>${waiting.map(s=>`<tr><td>${s.name}</td><td>${s.hostel}</td><td>${s.year}</td><td>2026-09-0${1+rnd(8)}</td><td>${statusBadge("Pending")}</td></tr>`).join("")}</tbody></table></div>
+  </div>
+  `;
+}
+function runAutoAllocate(){ toast("AI allocated 6 waiting students based on preferences & capacity"); }
+
+/* =====================================================================
+   ATTENDANCE
+===================================================================== */
+function renderAttendance(){
+  return `
+  ${pageHead("Attendance","Track daily hostel attendance, late entries and absentees across all blocks.")}
+  <div class="grid kpi-grid" style="margin-bottom:16px;">
+    ${kpiCard("🟢","Present","94%","of 4,286 students","up")}
+    ${kpiCard("🔴","Absent","4%","172 students","down")}
+    ${kpiCard("🟡","Late Entry","2%","86 students","flat")}
+    ${kpiCard("📋","Attendance Streak","18 days","above 90% mark","up")}
+  </div>
+  <div class="grid row-2" style="margin-bottom:16px;">
+    <div class="panel"><div class="panel-head"><h3>Today's Split</h3></div><div class="chart-box"><canvas id="chAttDonut"></canvas></div></div>
+    <div class="panel"><div class="panel-head"><h3>Hostel-wise Attendance</h3></div><div class="chart-box"><canvas id="chAttBar"></canvas></div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>Absent Student List</h3><div class="sub">Today</div></div>
+    <div class="table-wrap"><table><thead><tr><th>Student</th><th>Hostel</th><th>Room</th><th>Last Seen</th></tr></thead>
+    <tbody>${students.slice(0,8).map(s=>`<tr><td><div class="name-cell"><div class="mini-avatar">${initials(s.name)}</div>${s.name}</div></td><td>${s.hostel}</td><td>${s.room}</td><td>Yesterday, 9:40 PM</td></tr>`).join("")}</tbody></table></div>
+  </div>
+  `;
+}
+
+/* =====================================================================
+   LEAVE
+===================================================================== */
+function renderLeave(){
+  const isStudent = state.role==="Student";
+  return `
+  ${pageHead("Leave Requests", isStudent? "Apply for hostel leave and track approval status." : "Review, approve or reject student leave applications.",
+    isStudent? `<button class="btn btn-primary" onclick="openApplyLeave()">＋ Apply for Leave</button>` : "")}
+  <div class="grid kpi-grid" style="margin-bottom:16px;">
+    ${kpiCard("🟡","Pending", leaves.filter(l=>l.status==="Pending").length,"awaiting review","flat")}
+    ${kpiCard("🟢","Approved", leaves.filter(l=>l.status==="Approved").length,"this month","up")}
+    ${kpiCard("🔴","Rejected", leaves.filter(l=>l.status==="Rejected").length,"this month","flat")}
+    ${kpiCard("⚪","Expired", leaves.filter(l=>l.status==="Expired").length,"unactioned","down")}
+  </div>
+  <div class="panel">
+    <div class="table-wrap"><table>
+      <thead><tr><th>ID</th><th>Student</th><th>From</th><th>To</th><th>Reason</th><th>Destination</th><th>Status</th><th></th></tr></thead>
+      <tbody>${leaves.map(l=>`
+        <tr><td class="tabular">${l.id}</td><td>${l.student}</td><td>${l.from}</td><td>${l.to}</td><td>${l.reason}</td><td>${l.destination}</td><td>${statusBadge(l.status)}</td>
+        <td>${l.status==="Pending"?`<div class="btn-row"><button class="btn btn-sm" onclick="actLeave('${l.id}','Approved')">Approve</button><button class="btn btn-sm btn-danger" onclick="actLeave('${l.id}','Rejected')">Reject</button></div>`:""}</td></tr>
+      `).join("")}</tbody>
+    </table></div>
+  </div>
+  `;
+}
+function actLeave(id,status){
+  const l = leaves.find(x=>x.id===id); if(l){l.status=status;}
+  toast("Leave request "+status.toLowerCase());
+  renderContent();
+}
+function openApplyLeave(){
+  openModal(`
+    <div class="modal-head"><h3>Apply for Leave</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>Date From</label><input type="date" id="lvFrom"></div>
+        <div class="form-field"><label>Date To</label><input type="date" id="lvTo"></div>
+        <div class="form-field full"><label>Reason</label><input id="lvReason" placeholder="e.g. Family function"></div>
+        <div class="form-field full"><label>Destination</label><input id="lvDest" placeholder="e.g. Home town"></div>
+        <div class="form-field full"><label>Emergency Contact</label><input id="lvContact" placeholder="+91"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();toast('Leave request submitted for approval');">Submit Request</button></div>
+  `);
+}
+
+/* =====================================================================
+   COMPLAINTS
+===================================================================== */
+let complaintFilter = {cat:"",status:"",search:""};
+function renderComplaints(){
+  return `
+  ${pageHead("Complaints","AI automatically classifies category and assigns priority as complaints come in.",
+    `<button class="btn btn-primary" onclick="openNewComplaint()">＋ New Complaint</button>`)}
+  <div class="grid kpi-grid" style="margin-bottom:16px;">
+    ${kpiCard("🆕","New", complaints.filter(c=>c.status==="New").length,"just filed","flat")}
+    ${kpiCard("🛠","In Progress", complaints.filter(c=>c.status==="In Progress").length,"being worked on","flat")}
+    ${kpiCard("🟢","Resolved", complaints.filter(c=>c.status==="Resolved").length,"this month","up")}
+    ${kpiCard("🔴","Critical", complaints.filter(c=>c.priority==="CRITICAL").length,"need attention","down")}
+  </div>
+  <div class="panel">
+    <div class="table-toolbar">
+      <input class="input" placeholder="Search complaints…" oninput="complaintFilter.search=this.value;renderComplaintTable();">
+      <select class="select" onchange="complaintFilter.cat=this.value;renderComplaintTable();"><option value="">All Categories</option>${complaintCats.map(c=>`<option>${c}</option>`).join("")}</select>
+      <select class="select" onchange="complaintFilter.status=this.value;renderComplaintTable();"><option value="">All Statuses</option>${["New","Assigned","In Progress","Resolved","Closed"].map(s=>`<option>${s}</option>`).join("")}</select>
+    </div>
+    <div id="complaintTableHolder"></div>
+  </div>
+  `;
+}
+function renderComplaintTable(){
+  const holder=document.getElementById('complaintTableHolder'); if(!holder) return;
+  let rows = complaints.filter(c=>{
+    if(complaintFilter.cat && c.category!==complaintFilter.cat) return false;
+    if(complaintFilter.status && c.status!==complaintFilter.status) return false;
+    const q=complaintFilter.search.toLowerCase();
+    if(q && !(c.student.toLowerCase().includes(q)||c.desc.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  holder.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>ID</th><th>Student</th><th>Category</th><th>Hostel / Room</th><th>Priority</th><th>Status</th><th>Assigned</th></tr></thead>
+    <tbody>${rows.map(c=>`<tr class="clickable" onclick='openComplaintDetail(${JSON.stringify(c)})'>
+      <td class="tabular">${c.id}</td><td>${c.student}</td><td>${c.category}</td><td>${c.hostel} · ${c.room}</td>
+      <td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td>${c.assigned}</td></tr>`).join("")||`<tr><td colspan="7"><div class="empty"><b>No complaints match</b></div></td></tr>`}</tbody>
+  </table></div>`;
+}
+function openComplaintDetail(c){
+  openModal(`
+    <div class="modal-head"><h3>${c.id}</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="kv"><span>Student</span><span>${c.student}</span></div>
+      <div class="kv"><span>Category</span><span>${c.category} (AI-classified)</span></div>
+      <div class="kv"><span>Priority</span>${priorityBadge(c.priority)}</div>
+      <div class="kv"><span>Location</span><span>${c.hostel} · Room ${c.room}</span></div>
+      <div class="kv"><span>Status</span>${statusBadge(c.status)}</div>
+      <div class="kv"><span>Assigned to</span><span>${c.assigned}</span></div>
+      <div class="kv"><span>Filed on</span><span>${c.date}</span></div>
+      <div class="profile-section" style="margin-top:14px;"><h4>Description</h4><p style="font-size:13px;color:var(--text-dim);">${c.desc}</p></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Close</button><button class="btn btn-primary" onclick="closeModal();toast('Complaint assigned to staff');">Assign Staff</button></div>
+  `);
+}
+function openNewComplaint(){
+  openModal(`
+    <div class="modal-head"><h3>New Complaint</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>Category</label><select>${complaintCats.map(c=>`<option>${c}</option>`).join("")}</select></div>
+        <div class="form-field"><label>Room</label><input placeholder="e.g. 214"></div>
+        <div class="form-field full"><label>Description</label><textarea rows="3" placeholder="Describe the issue…"></textarea></div>
+        <div class="form-field full"><label>Attach Photo</label><input type="file"></div>
+      </div>
+      <div style="margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--bg-elev-2);border:1px solid var(--border);font-size:12px;color:var(--text-dim);">🤖 HostelAI will auto-classify category and priority once submitted.</div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();toast('Complaint submitted — AI is classifying it now');">Submit Complaint</button></div>
+  `);
+}
+
+/* =====================================================================
+   MAINTENANCE (Kanban)
+===================================================================== */
+function renderMaintenance(){
+  const cols = ["Pending","In Progress","Completed","Overdue"];
+  return `
+  ${pageHead("Maintenance","Track work orders from request to completion, with preventive reminders.",
+    `<button class="btn btn-primary" onclick="toast('New maintenance request logged')">＋ New Request</button>`)}
+  <div class="kanban">
+    ${cols.map(col=>`
+      <div>
+        <div class="kcol-head"><span>${col}</span><span>${maintenance.filter(m=>m.status===col).length}</span></div>
+        ${maintenance.filter(m=>m.status===col).map(m=>`
+          <div class="kcard"><b>${m.title}</b>${m.hostel}<div class="meta">👷 ${m.worker} · ₹${m.cost} · ${m.date}</div></div>
+        `).join("") || `<div class="kcard" style="color:var(--text-faint);text-align:center;">No items</div>`}
+      </div>
+    `).join("")}
+  </div>
+  `;
+}
+
+/* =====================================================================
+   MESS
+===================================================================== */
+function renderMess(){
+  const days=Object.keys(messMenu);
+  return `
+  ${pageHead("Mess Management","Weekly menu, meal ratings, and AI-driven quality insights.",
+    `<button class="btn btn-primary" onclick="toast('Menu editor would open here')">✎ Edit Menu</button>`)}
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-head"><h3>Weekly Menu</h3></div>
+    <div class="mess-grid">
+      ${days.map(d=>`<div class="mess-day"><h5>${d}</h5>
+        <div class="meal"><b>Breakfast</b>${messMenu[d].b}</div>
+        <div class="meal"><b>Lunch</b>${messMenu[d].l}</div>
+        <div class="meal"><b>Snacks</b>${messMenu[d].s}</div>
+        <div class="meal"><b>Dinner</b>${messMenu[d].d}</div>
+      </div>`).join("")}
+    </div>
+  </div>
+  <div class="grid row-2">
+    <div class="panel">
+      <div class="panel-head"><h3>Meal Ratings</h3><div class="sub">This week, out of 5</div></div>
+      ${Object.entries(messRatings).map(([meal,r])=>`
+        <div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;"><b>${meal}</b><span class="tabular">${r}/5</span></div>
+        <div class="rating-track"><i style="width:${r/5*100}%; background:${r<3?'var(--danger)':r<4?'var(--warn)':'var(--success)'}"></i></div></div>
+      `).join("")}
+      <div class="insight" style="margin-top:6px;"><div class="dot" style="background:var(--danger)"></div><div><div class="insight-title">🤖 AI Suggestion</div><div class="insight-body">Paneer quality received an average rating of 2.8/5 this week. Recommend reviewing the vendor for paneer supply.</div></div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Mess Snapshot</h3></div>
+      <div class="stat-line"><span>Mess attendance</span><b class="tabular">91%</b></div>
+      <div class="stat-line"><span>Food wastage (est.)</span><b class="tabular">6.2 kg/day</b></div>
+      <div class="stat-line"><span>Monthly mess expense</span><b class="tabular">₹18.4 L</b></div>
+      <div class="stat-line"><span>Complaints this week</span><b class="tabular">${complaints.filter(c=>c.category==="Food").length}</b></div>
+    </div>
+  </div>
+  `;
+}
+
+/* =====================================================================
+   VISITORS
+===================================================================== */
+function renderVisitors(){
+  return `
+  ${pageHead("Visitors","Log and approve visitor entries, with QR-based check-in support.",
+    `<button class="btn btn-primary" onclick="toast('QR check-in scanner would open here')">📷 QR Check-in</button>
+     <button class="btn" onclick="toast('New visitor entry logged')">＋ Register Visitor</button>`)}
+  <div class="panel">
+    <div class="table-wrap"><table>
+      <thead><tr><th>ID</th><th>Visitor</th><th>Visiting</th><th>Hostel</th><th>Purpose</th><th>Entry</th><th>Exit</th><th>Status</th></tr></thead>
+      <tbody>${visitors.map(v=>`<tr><td class="tabular">${v.id}</td><td>${v.name}</td><td>${v.visiting}</td><td>${v.hostel}</td><td>${v.purpose}</td><td>${v.entry}</td><td>${v.exit}</td><td>${statusBadge(v.status)}</td></tr>`).join("")}</tbody>
+    </table></div>
+  </div>
+  `;
+}
+
+/* =====================================================================
+   FEES
+===================================================================== */
+function renderFees(){
+  const total = fees.reduce((a,f)=>a+f.amount,0);
+  const collected = fees.filter(f=>f.status==="Paid").reduce((a,f)=>a+f.amount,0);
+  const pending = fees.filter(f=>f.status==="Pending").reduce((a,f)=>a+f.amount,0);
+  const overdue = fees.filter(f=>f.status==="Overdue").reduce((a,f)=>a+f.amount,0);
+  const fmt = n=>"₹"+(n/100000).toFixed(1)+"L";
+  return `
+  ${pageHead("Hostel Fees","Track collection status and manage receipts across all students.",
+    `<button class="btn" onclick="exportData('Fee report')">⬇ Export</button>`)}
+  <div class="grid kpi-grid" style="margin-bottom:16px;">
+    ${kpiCard("💰","Total Fees", fmt(total),"this term","flat")}
+    ${kpiCard("🟢","Collected", fmt(collected), Math.round(collected/total*100)+"% of total","up")}
+    ${kpiCard("🟡","Pending", fmt(pending),"awaiting payment","flat")}
+    ${kpiCard("🔴","Overdue", fmt(overdue),"needs follow-up","down")}
+  </div>
+  <div class="panel">
+    <div class="table-wrap"><table>
+      <thead><tr><th>Student ID</th><th>Name</th><th>Hostel</th><th>Amount</th><th>Due Date</th><th>Status</th><th></th></tr></thead>
+      <tbody>${fees.map(f=>`<tr><td class="tabular">${f.studentId}</td><td>${f.student}</td><td>${f.hostel}</td><td class="tabular">₹${f.amount.toLocaleString('en-IN')}</td><td>${f.dueDate}</td><td>${statusBadge(f.status)}</td>
+        <td>${f.status==="Paid"?`<button class="btn btn-sm" onclick="toast('Receipt downloaded')">⬇ Receipt</button>`:`<button class="btn btn-sm" onclick="toast('Reminder sent to '+'${f.student}')">Send Reminder</button>`}</td></tr>`).join("")}</tbody>
+    </table></div>
+  </div>
+  `;
+}
+
+/* =====================================================================
+   NOTICES
+===================================================================== */
+function renderNotices(){
+  const isAdmin = ["Super Admin","Warden"].includes(state.role);
+  return `
+  ${pageHead("Notices & Announcements","Publish and target announcements to specific hostels, years or departments.",
+    isAdmin? `<button class="btn btn-primary" onclick="openCreateNotice()">＋ Create Notice</button>`:"")}
+  <div class="grid row-2">
+    ${notices.map(n=>`
+      <div class="panel">
+        <div class="panel-head"><div><h3>${n.title}</h3><div class="sub">${n.date} · ${n.audience}</div></div></div>
+        <p style="font-size:13px;color:var(--text-dim);margin:0;">${n.body}</p>
+      </div>
+    `).join("")}
+  </div>
+  `;
+}
+function openCreateNotice(){
+  openModal(`
+    <div class="modal-head"><h3>Create Notice</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field full"><label>Title</label><input id="ntTitle" placeholder="Notice title"></div>
+        <div class="form-field full"><label>Message</label><textarea rows="4" id="ntBody" placeholder="Write the announcement…"></textarea></div>
+        <div class="form-field"><label>Target Audience</label><select id="ntAudience"><option>All Students</option><option>Specific Hostel</option><option>Specific Year</option><option>Specific Department</option></select></div>
+        <div class="form-field"><label>Type</label><select><option>General</option><option>Emergency</option><option>Mess</option><option>Maintenance</option></select></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitNotice()">Publish Notice</button></div>
+  `);
+}
+function submitNotice(){
+  const title=document.getElementById('ntTitle').value.trim();
+  if(!title){toast("Please add a title");return;}
+  notices.unshift({id:"NT-"+(90+notices.length), title, audience:document.getElementById('ntAudience').value, date:new Date().toISOString().slice(0,10), body:document.getElementById('ntBody').value||"—"});
+  closeModal(); toast("Notice published");
+  if(state.view==="notices") renderContent();
+}
+
+/* =====================================================================
+   EMERGENCY
+===================================================================== */
+function renderEmergency(){
+  const contacts=[["Security Desk","+91 98200 11223"],["Ambulance","102"],["City Hospital","+91 98200 44556"],["Warden (On-duty)","+91 98200 77889"],["Chief Warden","+91 98200 99001"],["Fire Department","101"]];
+  return `
+  <div class="emergency-hero" style="margin-bottom:20px;">
+    <div><h1 style="font-size:22px;">Emergency Center 🚨</h1><p style="color:var(--text-dim);margin:6px 0 0;max-width:480px;">Report fires, medical emergencies or security incidents instantly. Alerts are routed to wardens and security on duty.</p></div>
+    <button class="btn btn-danger" style="padding:14px 22px;font-size:14px;" onclick="reportEmergency()">🚨 REPORT EMERGENCY</button>
+  </div>
+  <div class="grid row-2">
+    <div class="panel">
+      <div class="panel-head"><h3>Report an Incident</h3></div>
+      <div class="btn-row">
+        <button class="btn" onclick="toast('Fire incident reported — security notified')">🔥 Fire Incident</button>
+        <button class="btn" onclick="toast('Medical emergency reported — ambulance alerted')">🚑 Medical Emergency</button>
+        <button class="btn" onclick="toast('Security incident reported')">🛡 Security Incident</button>
+        <button class="btn" onclick="toast('Evacuation protocol initiated')">🏃 Evacuation</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Emergency Contacts</h3></div>
+      ${contacts.map(c=>`<div class="contact-card"><span>${c[0]}</span><b class="tabular">${c[1]}</b></div>`).join("")}
+    </div>
+  </div>
+  `;
+}
+function reportEmergency(){ toast("🚨 Emergency alert sent to all on-duty wardens and security"); }
+
+/* =====================================================================
+   REPORTS
+===================================================================== */
+function renderReports(){
+  const types = ["Hostel Occupancy","Student List","Attendance","Leave","Complaints","Maintenance","Fees","Mess","Visitors","Safety Incidents"];
+  return `
+  ${pageHead("Reports","Generate and export reports across every module.")}
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="table-toolbar">
+      <input class="input" type="date" style="max-width:170px;">
+      <input class="input" type="date" style="max-width:170px;">
+      <select class="select"><option>All Hostels</option>${HOSTELS.map(h=>`<option>${h.name}</option>`).join("")}</select>
+    </div>
+  </div>
+  <div class="grid row-3">
+    ${types.map(t=>`
+      <div class="card">
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:10px;">${t} Report</div>
+        <div class="btn-row">
+          <button class="btn btn-sm" onclick="exportData('${t}','PDF')">PDF</button>
+          <button class="btn btn-sm" onclick="exportData('${t}','Excel')">Excel</button>
+          <button class="btn btn-sm" onclick="exportData('${t}','CSV')">CSV</button>
+        </div>
+      </div>
+    `).join("")}
+  </div>
+  `;
+}
+function exportData(name,fmt){ toast((fmt?fmt+" — ":"")+name+" export started"); }
+
+/* =====================================================================
+   SETTINGS
+===================================================================== */
+function renderSettings(){
+  return `
+  ${pageHead("Settings","Preferences for your HostelX workspace.")}
+  <div class="grid row-2">
+    <div class="panel">
+      <div class="panel-head"><h3>Appearance</h3></div>
+      <div class="stat-line"><span>Theme</span>
+        <div class="btn-row"><button class="btn btn-sm ${state.theme==='light'?'btn-primary':''}" onclick="setTheme('light')">☀ Light</button><button class="btn btn-sm ${state.theme==='dark'?'btn-primary':''}" onclick="setTheme('dark')">🌙 Dark</button></div>
+      </div>
+      <div class="stat-line"><span>Sidebar</span><button class="btn btn-sm" onclick="toggleCollapse()">Toggle collapsed</button></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Account</h3></div>
+      <div class="stat-line"><span>Role</span><b>${state.role}</b></div>
+      <div class="stat-line"><span>Name</span><b>${ROLE_NAME[state.role]}</b></div>
+      <div class="stat-line"><span>Institution</span><b>Greenview Institute of Technology</b></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:16px;">
+    <div class="panel-head"><h3>Notification Preferences</h3></div>
+    <div class="stat-line"><span>Leave request updates</span>${badge("On","b-green")}</div>
+    <div class="stat-line"><span>Fee reminders</span>${badge("On","b-green")}</div>
+    <div class="stat-line"><span>Emergency alerts</span>${badge("Always on","b-red")}</div>
+    <div class="stat-line"><span>Weekly digest</span>${badge("Off","b-gray")}</div>
+  </div>
+  `;
+}
+
+/* =====================================================================
+   MODAL / QUICK ACTIONS
+===================================================================== */
+function openModal(html, size){
+  const ov = document.getElementById('modalOverlay');
+  ov.innerHTML = `<div class="modal ${size==='wide'?'wide':''}">${html}</div>`;
+  ov.classList.remove('hidden');
+  ov.onclick = (e)=>{ if(e.target===ov) closeModal(); };
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.add('hidden'); }
+function openQuickActions(){
+  openModal(`
+    <div class="modal-head"><h3>Quick Actions</h3><button class="close-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="btn-row">
+        <button class="btn" onclick="closeModal();openAddStudent();">👨‍🎓 Add Student</button>
+        <button class="btn" onclick="closeModal();setView('allocation');">🛏 Allocate Room</button>
+        <button class="btn" onclick="closeModal();openCreateNotice();">📢 Create Notice</button>
+        <button class="btn" onclick="closeModal();setView('complaints');">🛠 Assign Complaint</button>
+        <button class="btn" onclick="closeModal();setView('leave');">📅 Approve Leave</button>
+        <button class="btn" onclick="closeModal();setView('reports');">📈 Generate Report</button>
+      </div>
+    </div>
+  `);
+}
+
+/* =====================================================================
+   COMMAND PALETTE
+===================================================================== */
+function buildSearchIndex(){
+  const idx=[];
+  students.forEach(s=>idx.push({type:"Student",icon:"👨‍🎓",title:s.name,desc:s.id+" · "+s.hostel,go:()=>{setView('students');setTimeout(()=>openStudentProfile(s.id),50);}}));
+  HOSTELS.forEach(h=>idx.push({type:"Hostel",icon:"🏢",title:h.name,desc:h.warden,go:()=>setView('hostels')}));
+  complaints.forEach(c=>idx.push({type:"Complaint",icon:"🛠",title:c.id+" — "+c.category,desc:c.student+" · "+c.status,go:()=>{setView('complaints');setTimeout(()=>openComplaintDetail(c),50);}}));
+  leaves.forEach(l=>idx.push({type:"Leave",icon:"📅",title:l.id+" — "+l.student,desc:l.status,go:()=>setView('leave')}));
+  fees.forEach(f=>idx.push({type:"Fee",icon:"💰",title:f.student,desc:f.status+" · ₹"+f.amount,go:()=>setView('fees')}));
+  visitors.forEach(v=>idx.push({type:"Visitor",icon:"👥",title:v.name,desc:"Visiting "+v.visiting,go:()=>setView('visitors')}));
+  notices.forEach(n=>idx.push({type:"Notice",icon:"📢",title:n.title,desc:n.audience,go:()=>setView('notices')}));
+  NAV.flatMap(g=>g.items).forEach(n=>idx.push({type:"Page",icon:n.icon,title:n.label,desc:"Go to "+n.label,go:()=>setView(n.id)}));
+  return idx;
+}
+let searchIndex=[];
+function openCmdk(){
+  searchIndex = buildSearchIndex();
+  document.getElementById('cmdkOverlay').classList.remove('hidden');
+  const input=document.getElementById('cmdkInput'); input.value=""; input.focus();
+  renderCmdkResults("");
+}
+function closeCmdk(){ document.getElementById('cmdkOverlay').classList.add('hidden'); }
+function renderCmdkResults(q){
+  const res=document.getElementById('cmdkResults');
+  q=q.toLowerCase();
+  let list = q? searchIndex.filter(i=>i.title.toLowerCase().includes(q)||i.desc.toLowerCase().includes(q)) : searchIndex.filter(i=>i.type==="Page");
+  list=list.slice(0,30);
+  res.innerHTML = list.length? list.map((i,idx)=>`
+    <div class="cmdk-item" onclick='window.__cmdkGo(${idx})'>
+      <div class="ic">${i.icon}</div><div><div class="t">${i.title}</div><div class="d">${i.type} · ${i.desc}</div></div>
+    </div>`).join("") : `<div class="cmdk-empty">No results for "${q}"</div>`;
+  window.__cmdkList = list;
+  window.__cmdkGo = (i)=>{ closeCmdk(); window.__cmdkList[i].go(); };
+}
+
+/* =====================================================================
+   AI ASSISTANT (HostelAI)
+===================================================================== */
+function toggleAI(force){
+  state.aiOpen = force!==undefined? force : !state.aiOpen;
+  document.getElementById('aiPanel').classList.toggle('hidden', !state.aiOpen);
+  if(state.aiOpen && !document.getElementById('aiMsgs').children.length){
+    aiPush("bot","👋 Hi, I'm HostelAI. Ask me about occupancy, complaints, attendance, fees or maintenance — I read live from your hostel data.");
+    renderAISuggestions();
+  }
+}
+function renderAISuggestions(){
+  const qs = ["Which rooms are available?","Show pending complaints","Who is absent today?","Which hostel has highest occupancy?","Show overdue fees","Which maintenance issues are critical?"];
+  document.getElementById('aiSuggest').innerHTML = qs.map(q=>`<div class="chip" onclick="aiAsk('${q.replace(/'/g,"\\'")}')">${q}</div>`).join("");
+}
+function aiPush(who,text){
+  const box=document.getElementById('aiMsgs');
+  const d=document.createElement('div'); d.className="msg "+who; d.textContent=text;
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
+}
+function aiAsk(q){
+  document.getElementById('aiInput').value=q;
+  aiSendMsg();
+}
+function aiSendMsg(){
+  const input=document.getElementById('aiInput');
+  const q=input.value.trim(); if(!q) return;
+  aiPush("user",q); input.value="";
+  setTimeout(()=>aiPush("bot", aiAnswer(q)), 380);
+}
+function aiAnswer(qRaw){
+  const q=qRaw.toLowerCase();
+  if(q.includes("available") && q.includes("room")){
+    const avail = roomFloors.flatMap(f=>f.rooms).filter(r=>r.status==="available").length;
+    return `There are ${avail} fully available rooms right now in Boys Hostel A alone. Campus-wide, available beds total ${(totalBedsAll()-occupiedAll()).toLocaleString()} across ${HOSTELS.length} hostels.`;
+  }
+  if(q.includes("pending") && q.includes("complaint")){
+    const n = complaints.filter(c=>["New","Assigned","In Progress"].includes(c.status)).length;
+    const crit = complaints.filter(c=>c.priority==="CRITICAL").length;
+    return `There are ${n} pending complaints, of which ${crit} are marked CRITICAL. Top category: ${topCategory()}.`;
+  }
+  if(q.includes("absent")){
+    return `172 students (≈4%) are marked absent today. Most absences are concentrated in Boys Hostel B. Want me to open the Attendance page?`;
+  }
+  if(q.includes("highest occupancy") || (q.includes("hostel") && q.includes("occupancy"))){
+    const top = HOSTELS.reduce((a,b)=> (a.occupied/a.totalBeds > b.occupied/b.totalBeds ? a:b));
+    return `${top.name} currently has the highest occupancy at ${Math.round(top.occupied/top.totalBeds*100)}%.`;
+  }
+  if(q.includes("overdue") && q.includes("fee")){
+    const n = fees.filter(f=>f.status==="Overdue").length;
+    const amt = fees.filter(f=>f.status==="Overdue").reduce((a,f)=>a+f.amount,0);
+    return `${n} students have overdue fees totalling ₹${amt.toLocaleString('en-IN')}. I can send bulk reminders from the Fees page.`;
+  }
+  if(q.includes("critical") && q.includes("maintenance")){
+    return `Two items need urgent attention: the water pump at Girls Hostel A (83% failure probability in 30 days) and recurring corridor lighting faults at Boys Hostel B.`;
+  }
+  if(q.includes("summar")){
+    const pend=complaints.filter(c=>["New","Assigned","In Progress"].includes(c.status)).length;
+    return `Today: 4,286 students, 89.3% occupancy, ${pend} open complaints, ${leaves.filter(l=>l.status==='Pending').length} leave requests pending, and fee collection at 91.3% of target.`;
+  }
+  if(q.includes("mess") || q.includes("food")){
+    return `Paneer quality is trending low this week at 2.8/5. Breakfast and Snacks are rated well above 4/5.`;
+  }
+  return `I looked through the hostel data but couldn't find a precise match for that. Try asking about room availability, complaints, attendance, fees, or maintenance.`;
+}
+function topCategory(){
+  const counts={};
+  complaints.forEach(c=>counts[c.category]=(counts[c.category]||0)+1);
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+/* =====================================================================
+   NOTIFICATIONS DROPDOWN
+===================================================================== */
+function renderNotifDropdown(){
+  const el=document.getElementById('notifDropdown');
+  const unread = notifications.filter(n=>n.unread).length;
+  document.getElementById('bellCount').textContent = unread;
+  document.getElementById('bellCount').classList.toggle('hidden', unread===0);
+  el.innerHTML = `
+    <div class="dropdown-head"><h4>Notifications</h4><button onclick="markAllRead()">Mark all read</button></div>
+    <div class="dropdown-list">${notifications.map(n=>`
+      <div class="notif ${n.unread?'unread':''}" onclick="markRead(${n.id})">
+        <div class="ic">${n.icon}</div><div><div class="t">${n.t}</div><div class="m">${n.m}</div></div>
+      </div>`).join("")}</div>
+  `;
+}
+function markRead(id){ const n=notifications.find(x=>x.id===id); if(n) n.unread=false; renderNotifDropdown(); }
+function markAllRead(){ notifications.forEach(n=>n.unread=false); renderNotifDropdown(); }
+
+/* =====================================================================
+   THEME / SIDEBAR / ROLE
+===================================================================== */
+function setTheme(t){
+  state.theme=t;
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themeBtn').textContent = t==='dark'?'🌙':'☀';
+  if(state.view==='settings') renderContent();
+}
+function toggleCollapse(){
+  state.sidebarCollapsed=!state.sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed', state.sidebarCollapsed);
+  document.getElementById('collapseBtn').textContent = state.sidebarCollapsed? "»":"« Collapse";
+  if(state.view==='settings') renderContent();
+}
+function setRole(role){
+  state.role=role;
+  document.getElementById('profileAvatar').textContent = ROLE_INIT[role];
+  document.getElementById('profileName').textContent = ROLE_NAME[role];
+  renderNav();
+  renderContent();
+}
+
+/* =====================================================================
+   CHART INIT (Chart.js)
+===================================================================== */
+function destroyChart(id){ if(state.charts[id]){ state.charts[id].destroy(); delete state.charts[id]; } }
+function chartDefaults(){
+  const dim = getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim();
+  const border = getComputedStyle(document.documentElement).getPropertyValue('--border-soft').trim();
+  return {dim, border};
+}
+function afterRender(){
+  const {dim,border} = chartDefaults();
+  Chart.defaults.color = dim; Chart.defaults.borderColor = border; Chart.defaults.font.family = "Inter, system-ui, sans-serif"; Chart.defaults.font.size = 11.5;
+
+  if(state.view==='dashboard' && state.role!=='Student' && state.role!=='Parent'){
+    mkDonut('chartOccDonut', ['Occupied','Available','Reserved','Maintenance'], [occupiedAll(), totalBedsAll()-occupiedAll()-260-60, 260, 60], ['#6C8CFF','#3FCF8E','#F2B84B','#F0654F']);
+    mkLine('chartOccTrend', ['Apr','May','Jun','Jul','Aug','Sep'], [[82,84,85,87,88,89.3]], ['#17B8A6'], ['Occupancy %']);
+  }
+  if(state.view==='analytics'){
+    mkBar('chAnalytics1', HOSTELS.map(h=>h.name.replace('Hostel ','H')), [HOSTELS.map(h=>h.occupied)], ['#6C8CFF']);
+    mkDonut('chAnalytics2', ['Male','Female'], [2180,2106], ['#6C8CFF','#F2B84B']);
+    const catCounts = complaintCats.map(c=>complaints.filter(x=>x.category===c).length);
+    mkBar('chAnalytics3', complaintCats, [catCounts], ['#F0654F']);
+    mkBar('chAnalytics4', ['Apr','May','Jun','Jul','Aug','Sep'], [[28,31,26,34,30,33]], ['#3FCF8E']);
+    mkLine('chAnalytics5', ['Apr','May','Jun','Jul','Aug','Sep'], [[40,44,38,46,42,48],[35,41,37,44,40,47]], ['#F0654F','#3FCF8E'], ['Received','Resolved']);
+  }
+  if(state.view==='ai'){
+    mkLine('chOccPredict', ['Sem-2','Sem-3','Sem-4','Sem-5(proj)'], [[86,88,89.3,94]], ['#6C8CFF'], ['Occupancy %']);
+  }
+  if(state.view==='attendance'){
+    mkDonut('chAttDonut', ['Present','Absent','Late'], [94,4,2], ['#3FCF8E','#F0654F','#F2B84B']);
+    mkBar('chAttBar', HOSTELS.map(h=>h.name.replace('Hostel ','H')), [HOSTELS.map(()=>88+rnd(10))], ['#17B8A6']);
+  }
+  if(state.view==='students') renderStudentTable();
+  if(state.view==='complaints') renderComplaintTable();
+}
+function mkDonut(id, labels, data, colors){
+  const el=document.getElementById(id); if(!el) return; destroyChart(id);
+  state.charts[id] = new Chart(el, {type:'doughnut', data:{labels, datasets:[{data, backgroundColor:colors, borderWidth:0}]},
+    options:{plugins:{legend:{display:false}, tooltip:{padding:10}}, cutout:'68%', maintainAspectRatio:false}});
+}
+function mkBar(id, labels, datasets, colors){
+  const el=document.getElementById(id); if(!el) return; destroyChart(id);
+  state.charts[id] = new Chart(el, {type:'bar', data:{labels, datasets:datasets.map((d,i)=>({data:d, backgroundColor:colors[i], borderRadius:5, maxBarThickness:34}))},
+    options:{plugins:{legend:{display:false}}, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:chartDefaults().border}}}}});
+}
+function mkLine(id, labels, datasets, colors, names){
+  const el=document.getElementById(id); if(!el) return; destroyChart(id);
+  state.charts[id] = new Chart(el, {type:'line', data:{labels, datasets:datasets.map((d,i)=>({data:d, borderColor:colors[i], backgroundColor:colors[i]+'22', label:names?names[i]:'', fill:true, tension:.35, pointRadius:3}))},
+    options:{plugins:{legend:{display:!!(names&&names.length>1), labels:{boxWidth:10}}}, maintainAspectRatio:false, scales:{x:{grid:{display:false}}, y:{grid:{color:chartDefaults().border}}}}});
+}
+
+/* =====================================================================
+   BOOTSTRAP / EVENTS
+===================================================================== */
+document.getElementById('roleSelect').addEventListener('change', e=>setRole(e.target.value));
+document.getElementById('themeBtn').addEventListener('click', ()=>setTheme(state.theme==='dark'?'light':'dark'));
+document.getElementById('collapseBtn').addEventListener('click', toggleCollapse);
+document.getElementById('hamburgerBtn').addEventListener('click', ()=>document.getElementById('sidebar').classList.toggle('mobile-open'));
+document.getElementById('searchTrigger').addEventListener('click', openCmdk);
+document.getElementById('cmdkOverlay').addEventListener('click', e=>{ if(e.target.id==='cmdkOverlay') closeCmdk(); });
+document.getElementById('cmdkInput').addEventListener('input', e=>renderCmdkResults(e.target.value));
+document.getElementById('bellBtn').addEventListener('click', e=>{
+  e.stopPropagation();
+  const dd=document.getElementById('notifDropdown');
+  const willOpen = dd.classList.contains('hidden');
+  dd.classList.toggle('hidden');
+  if(willOpen) renderNotifDropdown();
+});
+document.addEventListener('click', ()=>document.getElementById('notifDropdown').classList.add('hidden'));
+document.getElementById('aiFab').addEventListener('click', ()=>toggleAI());
+document.getElementById('aiClose').addEventListener('click', ()=>toggleAI(false));
+document.getElementById('aiSend').addEventListener('click', aiSendMsg);
+document.getElementById('aiInput').addEventListener('keydown', e=>{ if(e.key==='Enter') aiSendMsg(); });
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openCmdk(); }
+  if(e.key==='Escape'){ closeCmdk(); closeModal(); }
+});
+
+setRole('Super Admin');
+renderNav();
+renderContent();
+</script>
+</body>
+</html>
